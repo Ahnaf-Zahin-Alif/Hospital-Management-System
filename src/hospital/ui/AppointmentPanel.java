@@ -10,11 +10,15 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class AppointmentPanel extends JPanel {
 
@@ -27,9 +31,8 @@ public class AppointmentPanel extends JPanel {
     private final Color textDark = new Color(35, 45, 60);
     private final Color textMuted = new Color(105, 120, 135);
 
-    private final AppointmentServices appointmentServices;
+    private final AppointmentServices appointmentServices = new AppointmentServices();
 
-    // Form fields
     private JTextField txtApptId;
     private JTextField txtPatient;
     private JTextField txtDoctor;
@@ -39,7 +42,6 @@ public class AppointmentPanel extends JPanel {
     private JComboBox<String> comboStatus;
     private JTextArea txtNotes;
 
-    // Search & Filter
     private JTextField txtSearch;
     private JComboBox<String> filterStatus;
     private DefaultTableModel tableModel;
@@ -47,37 +49,22 @@ public class AppointmentPanel extends JPanel {
     private TableRowSorter<DefaultTableModel> rowSorter;
     private JLabel countLabel;
 
-    // Buttons
-    private JButton btnBook;
-    private JButton btnUpdate;
-    private JButton btnCancel;
-    private JButton btnClear;
-
     public AppointmentPanel() {
-        appointmentServices = new AppointmentServices();
-
         setLayout(new BorderLayout(15, 15));
         setBackground(bgLight);
         setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        // Top Filter Bar
-        JPanel topBar = createTopBar();
-        add(topBar, BorderLayout.NORTH);
+        add(createTopBar(), BorderLayout.NORTH);
 
-        // Center Split (Form Card on left, Table Card on right)
         JPanel mainContent = new JPanel(new BorderLayout(15, 0));
         mainContent.setOpaque(false);
 
         JPanel formCard = createFormCard();
         formCard.setPreferredSize(new Dimension(340, 0));
         mainContent.add(formCard, BorderLayout.WEST);
-
-        JPanel tableCard = createTableCard();
-        mainContent.add(tableCard, BorderLayout.CENTER);
+        mainContent.add(createTableCard(), BorderLayout.CENTER);
 
         add(mainContent, BorderLayout.CENTER);
-
-        // Load data from MySQL
         loadAppointmentsFromDatabase();
     }
 
@@ -86,7 +73,6 @@ public class AppointmentPanel extends JPanel {
         bar.setOpaque(false);
         bar.setPreferredSize(new Dimension(0, 48));
 
-        // Search + Status Filter
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         searchPanel.setOpaque(false);
 
@@ -96,11 +82,18 @@ public class AppointmentPanel extends JPanel {
         txtSearch = new JTextField(16);
         styleInputField(txtSearch, 36);
         txtSearch.setToolTipText("Search by Patient, Doctor, or ID");
+        txtSearch.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                applyFilters();
+            }
+        });
 
         String[] statusFilters = {"All Statuses", "Scheduled", "Completed", "Cancelled"};
         filterStatus = new JComboBox<>(statusFilters);
         styleComboBox(filterStatus);
         filterStatus.setPreferredSize(new Dimension(135, 36));
+        filterStatus.addActionListener(e -> applyFilters());
 
         JButton btnFilter = createButton("Filter", blue, Color.WHITE, 12);
         btnFilter.addActionListener(e -> applyFilters());
@@ -112,22 +105,12 @@ public class AppointmentPanel extends JPanel {
             rowSorter.setRowFilter(null);
         });
 
-        txtSearch.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyReleased(java.awt.event.KeyEvent e) {
-                applyFilters();
-            }
-        });
-
-        filterStatus.addActionListener(e -> applyFilters());
-
         searchPanel.add(lblSearch);
         searchPanel.add(txtSearch);
         searchPanel.add(filterStatus);
         searchPanel.add(btnFilter);
         searchPanel.add(btnReset);
 
-        // Stats badge
         JPanel badgePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 8));
         badgePanel.setOpaque(false);
 
@@ -152,21 +135,15 @@ public class AppointmentPanel extends JPanel {
         String query = txtSearch.getText().trim();
         String status = (String) filterStatus.getSelectedItem();
 
-        java.util.List<RowFilter<Object, Object>> filters = new java.util.ArrayList<>();
-
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
         if (!query.isEmpty()) {
-            filters.add(RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(query)));
+            filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(query)));
+        }
+        if (status != null && !"All Statuses".equals(status)) {
+            filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(status), 6));
         }
 
-        if (status != null && !status.equals("All Statuses")) {
-            filters.add(RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(status), 6));
-        }
-
-        if (filters.isEmpty()) {
-            rowSorter.setRowFilter(null);
-        } else {
-            rowSorter.setRowFilter(RowFilter.andFilter(filters));
-        }
+        rowSorter.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
     }
 
     private JPanel createFormCard() {
@@ -177,9 +154,8 @@ public class AppointmentPanel extends JPanel {
                 new EmptyBorder(16, 18, 16, 18)
         ));
 
-        // Header
-        JPanel cardHeader = new JPanel(new BorderLayout());
-        cardHeader.setOpaque(false);
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
 
         JLabel title = new JLabel("Appointment Booking");
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -189,14 +165,13 @@ public class AppointmentPanel extends JPanel {
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 11));
         subtitle.setForeground(textMuted);
 
-        cardHeader.add(title, BorderLayout.NORTH);
-        cardHeader.add(subtitle, BorderLayout.SOUTH);
-        card.add(cardHeader, BorderLayout.NORTH);
+        header.add(title, BorderLayout.NORTH);
+        header.add(subtitle, BorderLayout.SOUTH);
+        card.add(header, BorderLayout.NORTH);
 
-        // Fields Container
-        JPanel fieldsPanel = new JPanel();
-        fieldsPanel.setLayout(new BoxLayout(fieldsPanel, BoxLayout.Y_AXIS));
-        fieldsPanel.setOpaque(false);
+        JPanel fields = new JPanel();
+        fields.setLayout(new BoxLayout(fields, BoxLayout.Y_AXIS));
+        fields.setOpaque(false);
 
         txtApptId = new JTextField(appointmentServices.getNextAppointmentId());
         txtApptId.setEditable(false);
@@ -211,15 +186,21 @@ public class AppointmentPanel extends JPanel {
         styleInputField(txtDoctor, 32);
         txtDoctor.setToolTipText("e.g. Dr. Alexander Wright");
 
-        String today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
-        txtDate = new JTextField(today);
+        txtDate = new JTextField(LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
         styleInputField(txtDate, 32);
 
-        String[] timeSlots = {"09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM"};
+        String[] timeSlots = {
+                "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
+                "11:00 AM", "11:30 AM", "02:00 PM", "02:30 PM",
+                "03:00 PM", "03:30 PM", "04:00 PM"
+        };
         comboTime = new JComboBox<>(timeSlots);
         styleComboBox(comboTime);
 
-        String[] depts = {"General Medicine", "Cardiology", "Neurology", "Pediatrics", "Orthopedics", "Dermatology", "Oncology"};
+        String[] depts = {
+                "General Medicine", "Cardiology", "Neurology", "Pediatrics",
+                "Orthopedics", "Dermatology", "Oncology"
+        };
         comboDepartment = new JComboBox<>(depts);
         styleComboBox(comboDepartment);
 
@@ -240,47 +221,43 @@ public class AppointmentPanel extends JPanel {
         JScrollPane notesScroll = new JScrollPane(txtNotes);
         notesScroll.setBorder(null);
 
-        // Add fields
-        fieldsPanel.add(createFieldRow("Appointment ID:", txtApptId));
-        fieldsPanel.add(Box.createVerticalStrut(6));
-        fieldsPanel.add(createFieldRow("Patient (ID / Name) *:", txtPatient));
-        fieldsPanel.add(Box.createVerticalStrut(6));
-        fieldsPanel.add(createFieldRow("Doctor (ID / Name) *:", txtDoctor));
-        fieldsPanel.add(Box.createVerticalStrut(6));
+        fields.add(createFieldRow("Appointment ID:", txtApptId));
+        fields.add(Box.createVerticalStrut(6));
+        fields.add(createFieldRow("Patient (ID / Name) *:", txtPatient));
+        fields.add(Box.createVerticalStrut(6));
+        fields.add(createFieldRow("Doctor (ID / Name) *:", txtDoctor));
+        fields.add(Box.createVerticalStrut(6));
 
-        // Date & Time Row
         JPanel dateTimeRow = new JPanel(new GridLayout(1, 2, 8, 0));
         dateTimeRow.setOpaque(false);
         dateTimeRow.add(createFieldRow("Date (YYYY-MM-DD) *:", txtDate));
         dateTimeRow.add(createFieldRow("Time Slot:", comboTime));
-        fieldsPanel.add(dateTimeRow);
-        fieldsPanel.add(Box.createVerticalStrut(6));
+        fields.add(dateTimeRow);
+        fields.add(Box.createVerticalStrut(6));
 
-        // Department & Status Row
         JPanel deptStatusRow = new JPanel(new GridLayout(1, 2, 8, 0));
         deptStatusRow.setOpaque(false);
         deptStatusRow.add(createFieldRow("Department:", comboDepartment));
         deptStatusRow.add(createFieldRow("Status:", comboStatus));
-        fieldsPanel.add(deptStatusRow);
-        fieldsPanel.add(Box.createVerticalStrut(6));
+        fields.add(deptStatusRow);
+        fields.add(Box.createVerticalStrut(6));
 
-        fieldsPanel.add(createFieldRow("Notes / Symptoms:", notesScroll));
+        fields.add(createFieldRow("Notes / Symptoms:", notesScroll));
 
-        JScrollPane formScroll = new JScrollPane(fieldsPanel);
+        JScrollPane formScroll = new JScrollPane(fields);
         formScroll.setBorder(null);
         formScroll.setOpaque(false);
         formScroll.getViewport().setOpaque(false);
         card.add(formScroll, BorderLayout.CENTER);
 
-        // Actions
         JPanel actions = new JPanel(new GridLayout(2, 2, 8, 8));
         actions.setOpaque(false);
         actions.setBorder(new EmptyBorder(10, 0, 0, 0));
 
-        btnBook = createButton("Book Visit", blue, Color.WHITE, 12);
-        btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
-        btnCancel = createButton("Cancel Appt", new Color(215, 60, 60), Color.WHITE, 12);
-        btnClear = createButton("Clear", new Color(235, 241, 248), navy, 12);
+        JButton btnBook = createButton("Book Visit", blue, Color.WHITE, 12);
+        JButton btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
+        JButton btnCancel = createButton("Cancel Appt", new Color(215, 60, 60), Color.WHITE, 12);
+        JButton btnClear = createButton("Clear", new Color(235, 241, 248), navy, 12);
 
         btnBook.addActionListener(e -> bookAppointment());
         btnUpdate.addActionListener(e -> updateAppointment());
@@ -297,16 +274,16 @@ public class AppointmentPanel extends JPanel {
     }
 
     private JPanel createFieldRow(String labelText, JComponent component) {
-        JPanel p = new JPanel(new BorderLayout(0, 3));
-        p.setOpaque(false);
+        JPanel panel = new JPanel(new BorderLayout(0, 3));
+        panel.setOpaque(false);
 
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("SansSerif", Font.BOLD, 12));
         label.setForeground(textDark);
 
-        p.add(label, BorderLayout.NORTH);
-        p.add(component, BorderLayout.CENTER);
-        return p;
+        panel.add(label, BorderLayout.NORTH);
+        panel.add(component, BorderLayout.CENTER);
+        return panel;
     }
 
     private JPanel createTableCard() {
@@ -317,9 +294,8 @@ public class AppointmentPanel extends JPanel {
                 new EmptyBorder(14, 16, 14, 16)
         ));
 
-        // Header
-        JPanel cardHeader = new JPanel(new BorderLayout());
-        cardHeader.setOpaque(false);
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
 
         JLabel title = new JLabel("Appointment Schedule");
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -329,11 +305,10 @@ public class AppointmentPanel extends JPanel {
         info.setFont(new Font("SansSerif", Font.PLAIN, 11));
         info.setForeground(textMuted);
 
-        cardHeader.add(title, BorderLayout.WEST);
-        cardHeader.add(info, BorderLayout.EAST);
-        card.add(cardHeader, BorderLayout.NORTH);
+        header.add(title, BorderLayout.WEST);
+        header.add(info, BorderLayout.EAST);
+        card.add(header, BorderLayout.NORTH);
 
-        // Table
         String[] columns = {"Appt ID", "Patient", "Doctor", "Date", "Time", "Department", "Status", "Notes"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -345,7 +320,6 @@ public class AppointmentPanel extends JPanel {
         appointmentTable = new JTable(tableModel);
         rowSorter = new TableRowSorter<>(tableModel);
         appointmentTable.setRowSorter(rowSorter);
-
         appointmentTable.setRowHeight(32);
         appointmentTable.setFont(new Font("SansSerif", Font.PLAIN, 13));
         appointmentTable.setGridColor(new Color(235, 240, 245));
@@ -360,57 +334,43 @@ public class AppointmentPanel extends JPanel {
         th.setPreferredSize(new Dimension(0, 36));
         th.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, borderLight));
 
-        // Center align ID, Date, Time, Status
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        appointmentTable.getColumnModel().getColumn(0).setPreferredWidth(65);
-        appointmentTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        appointmentTable.getColumnModel().getColumn(3).setPreferredWidth(85);
-        appointmentTable.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
-        appointmentTable.getColumnModel().getColumn(4).setPreferredWidth(75);
-        appointmentTable.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Custom status badge renderer
+        int[] widths = {65, 120, 130, 85, 75, 110, 85, 140};
+        for (int i = 0; i < widths.length; i++) {
+            appointmentTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+        appointmentTable.getColumnModel().getColumn(0).setCellRenderer(center);
+        appointmentTable.getColumnModel().getColumn(3).setCellRenderer(center);
+        appointmentTable.getColumnModel().getColumn(4).setCellRenderer(center);
+
         appointmentTable.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                c.setHorizontalAlignment(SwingConstants.CENTER);
+                JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                label.setHorizontalAlignment(SwingConstants.CENTER);
                 String val = value != null ? value.toString() : "";
                 if (!isSelected) {
                     if ("Completed".equalsIgnoreCase(val)) {
-                        c.setForeground(new Color(30, 140, 70));
+                        label.setForeground(new Color(30, 140, 70));
                     } else if ("Cancelled".equalsIgnoreCase(val)) {
-                        c.setForeground(new Color(210, 40, 40));
+                        label.setForeground(new Color(210, 40, 40));
                     } else {
-                        c.setForeground(new Color(210, 120, 20));
+                        label.setForeground(new Color(210, 120, 20));
                     }
-                    c.setFont(c.getFont().deriveFont(Font.BOLD));
+                    label.setFont(label.getFont().deriveFont(Font.BOLD));
                 }
-                return c;
+                return label;
             }
         });
 
-        appointmentTable.getColumnModel().getColumn(1).setPreferredWidth(120);
-        appointmentTable.getColumnModel().getColumn(2).setPreferredWidth(130);
-        appointmentTable.getColumnModel().getColumn(5).setPreferredWidth(110);
-        appointmentTable.getColumnModel().getColumn(6).setPreferredWidth(85);
-
-        // Click to populate
         appointmentTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int row = appointmentTable.getSelectedRow();
                 if (row != -1) {
-                    int modelRow = appointmentTable.convertRowIndexToModel(row);
-                    txtApptId.setText(tableModel.getValueAt(modelRow, 0).toString());
-                    txtPatient.setText(tableModel.getValueAt(modelRow, 1).toString());
-                    txtDoctor.setText(tableModel.getValueAt(modelRow, 2).toString());
-                    txtDate.setText(tableModel.getValueAt(modelRow, 3).toString());
-                    comboTime.setSelectedItem(tableModel.getValueAt(modelRow, 4).toString());
-                    comboDepartment.setSelectedItem(tableModel.getValueAt(modelRow, 5).toString());
-                    comboStatus.setSelectedItem(tableModel.getValueAt(modelRow, 6).toString());
-                    txtNotes.setText(tableModel.getValueAt(modelRow, 7).toString());
+                    populateFormFromRow(appointmentTable.convertRowIndexToModel(row));
                 }
             }
         });
@@ -423,34 +383,59 @@ public class AppointmentPanel extends JPanel {
         return card;
     }
 
-    private void bookAppointment() {
+    private void populateFormFromRow(int modelRow) {
+        txtApptId.setText(String.valueOf(tableModel.getValueAt(modelRow, 0)));
+        txtPatient.setText(String.valueOf(tableModel.getValueAt(modelRow, 1)));
+        txtDoctor.setText(String.valueOf(tableModel.getValueAt(modelRow, 2)));
+        txtDate.setText(String.valueOf(tableModel.getValueAt(modelRow, 3)));
+        comboTime.setSelectedItem(String.valueOf(tableModel.getValueAt(modelRow, 4)));
+        comboDepartment.setSelectedItem(String.valueOf(tableModel.getValueAt(modelRow, 5)));
+        comboStatus.setSelectedItem(String.valueOf(tableModel.getValueAt(modelRow, 6)));
+        txtNotes.setText(String.valueOf(tableModel.getValueAt(modelRow, 7)));
+    }
+
+    private Appointment parseAppointmentFromForm() {
+        String id = txtApptId.getText().trim();
         String patient = txtPatient.getText().trim();
         String doctor = txtDoctor.getText().trim();
         String date = txtDate.getText().trim();
-        String time = (String) comboTime.getSelectedItem();
-        String dept = (String) comboDepartment.getSelectedItem();
-        String status = (String) comboStatus.getSelectedItem();
-        String notes = txtNotes.getText().trim();
 
         if (patient.isEmpty() || doctor.isEmpty() || date.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "Patient, Doctor, and Date are required fields!",
+                    "Patient, Doctor, and Date are required fields.",
                     "Validation Error",
                     JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+
+        return new Appointment(
+                id,
+                patient,
+                doctor,
+                date,
+                (String) comboTime.getSelectedItem(),
+                (String) comboDepartment.getSelectedItem(),
+                (String) comboStatus.getSelectedItem(),
+                txtNotes.getText().trim()
+        );
+    }
+
+    private void bookAppointment() {
+        Appointment appt = parseAppointmentFromForm();
+        if (appt == null) {
             return;
         }
 
-        String id = txtApptId.getText().trim();
-        Appointment a = new Appointment(id, patient, doctor, date, time, dept, status, notes);
-
-        boolean saved = appointmentServices.addAppointment(a);
-        if (saved) {
-            tableModel.addRow(new Object[]{id, patient, doctor, date, time, dept, status, notes});
+        if (appointmentServices.addAppointment(appt)) {
+            tableModel.addRow(new Object[]{
+                    appt.getId(), appt.getPatient(), appt.getDoctor(),
+                    appt.getDate(), appt.getTime(), appt.getDepartment(),
+                    appt.getStatus(), appt.getNotes()
+            });
             JOptionPane.showMessageDialog(this,
-                    "Appointment " + id + " booked successfully in database!",
+                    "Appointment " + appt.getId() + " booked successfully.",
                     "Booking Confirmed",
                     JOptionPane.INFORMATION_MESSAGE);
-
             clearForm();
             updateCount();
         } else {
@@ -471,39 +456,23 @@ public class AppointmentPanel extends JPanel {
             return;
         }
 
-        int modelRow = appointmentTable.convertRowIndexToModel(selectedRow);
-
-        String id = txtApptId.getText().trim();
-        String patient = txtPatient.getText().trim();
-        String doctor = txtDoctor.getText().trim();
-        String date = txtDate.getText().trim();
-        String time = (String) comboTime.getSelectedItem();
-        String dept = (String) comboDepartment.getSelectedItem();
-        String status = (String) comboStatus.getSelectedItem();
-        String notes = txtNotes.getText().trim();
-
-        if (patient.isEmpty() || doctor.isEmpty() || date.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Patient, Doctor, and Date are required fields!",
-                    "Validation Error",
-                    JOptionPane.WARNING_MESSAGE);
+        Appointment appt = parseAppointmentFromForm();
+        if (appt == null) {
             return;
         }
 
-        Appointment a = new Appointment(id, patient, doctor, date, time, dept, status, notes);
-        boolean updated = appointmentServices.updateAppointment(a);
-
-        if (updated) {
-            tableModel.setValueAt(patient, modelRow, 1);
-            tableModel.setValueAt(doctor, modelRow, 2);
-            tableModel.setValueAt(date, modelRow, 3);
-            tableModel.setValueAt(time, modelRow, 4);
-            tableModel.setValueAt(dept, modelRow, 5);
-            tableModel.setValueAt(status, modelRow, 6);
-            tableModel.setValueAt(notes, modelRow, 7);
+        int modelRow = appointmentTable.convertRowIndexToModel(selectedRow);
+        if (appointmentServices.updateAppointment(appt)) {
+            tableModel.setValueAt(appt.getPatient(), modelRow, 1);
+            tableModel.setValueAt(appt.getDoctor(), modelRow, 2);
+            tableModel.setValueAt(appt.getDate(), modelRow, 3);
+            tableModel.setValueAt(appt.getTime(), modelRow, 4);
+            tableModel.setValueAt(appt.getDepartment(), modelRow, 5);
+            tableModel.setValueAt(appt.getStatus(), modelRow, 6);
+            tableModel.setValueAt(appt.getNotes(), modelRow, 7);
 
             JOptionPane.showMessageDialog(this,
-                    "Appointment details updated successfully in database!",
+                    "Appointment details updated successfully.",
                     "Update Complete",
                     JOptionPane.INFORMATION_MESSAGE);
         } else {
@@ -525,21 +494,20 @@ public class AppointmentPanel extends JPanel {
         }
 
         int modelRow = appointmentTable.convertRowIndexToModel(selectedRow);
-        String apptId = tableModel.getValueAt(modelRow, 0).toString();
+        String apptId = String.valueOf(tableModel.getValueAt(modelRow, 0));
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Do you want to mark Appointment " + apptId + " as Cancelled in database?",
+                "Do you want to mark Appointment " + apptId + " as Cancelled?",
                 "Cancel Appointment",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean cancelled = appointmentServices.cancelAppointment(apptId);
-            if (cancelled) {
+            if (appointmentServices.cancelAppointment(apptId)) {
                 tableModel.setValueAt("Cancelled", modelRow, 6);
                 comboStatus.setSelectedItem("Cancelled");
                 JOptionPane.showMessageDialog(this,
-                        "Appointment " + apptId + " has been marked as Cancelled in database.",
+                        "Appointment " + apptId + " marked as Cancelled.",
                         "Appointment Cancelled",
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
@@ -570,17 +538,10 @@ public class AppointmentPanel extends JPanel {
 
     private void loadAppointmentsFromDatabase() {
         tableModel.setRowCount(0);
-        List<Appointment> list = appointmentServices.getAllAppointments();
-        for (Appointment a : list) {
+        for (Appointment a : appointmentServices.getAllAppointments()) {
             tableModel.addRow(new Object[]{
-                    a.getId(),
-                    a.getPatient(),
-                    a.getDoctor(),
-                    a.getDate(),
-                    a.getTime(),
-                    a.getDepartment(),
-                    a.getStatus(),
-                    a.getNotes()
+                    a.getId(), a.getPatient(), a.getDoctor(), a.getDate(),
+                    a.getTime(), a.getDepartment(), a.getStatus(), a.getNotes()
             });
         }
         updateCount();
@@ -632,21 +593,5 @@ public class AppointmentPanel extends JPanel {
         });
 
         return btn;
-    }
-
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
-        }
-
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Appointment Panel Preview");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1000, 600);
-            frame.setLocationRelativeTo(null);
-            frame.add(new AppointmentPanel());
-            frame.setVisible(true);
-        });
     }
 }

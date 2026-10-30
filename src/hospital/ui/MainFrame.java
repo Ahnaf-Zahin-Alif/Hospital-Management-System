@@ -17,8 +17,8 @@ public class MainFrame extends JFrame {
     private final Color textMuted = new Color(110, 125, 140);
     private final Color borderLight = new Color(225, 232, 240);
 
-    private String currentUser;
-    private String currentRole;
+    private final String currentUser;
+    private final String currentRole;
 
     private CardLayout cardLayout;
     private JPanel contentCards;
@@ -50,39 +50,25 @@ public class MainFrame extends JFrame {
 
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(contentBg);
+        root.add(createSidebar(), BorderLayout.WEST);
 
-        // Sidebar
-        JPanel sidebar = createSidebar();
-        root.add(sidebar, BorderLayout.WEST);
-
-        // Right side (Header + Cards)
         JPanel mainContainer = new JPanel(new BorderLayout());
         mainContainer.setOpaque(false);
+        mainContainer.add(createHeader(), BorderLayout.NORTH);
 
-        JPanel topHeader = createHeader();
-        mainContainer.add(topHeader, BorderLayout.NORTH);
-
-        // Cards for panels
         cardLayout = new CardLayout();
         contentCards = new JPanel(cardLayout);
         contentCards.setBackground(contentBg);
         contentCards.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        // Add sub-panels
-        PatientPanel patientPanel = new PatientPanel();
-        DoctorPanel doctorPanel = new DoctorPanel();
-        AppointmentPanel appointmentPanel = new AppointmentPanel();
-
-        contentCards.add(patientPanel, "PATIENTS");
-        contentCards.add(doctorPanel, "DOCTORS");
-        contentCards.add(appointmentPanel, "APPOINTMENTS");
+        contentCards.add(new PatientPanel(), "PATIENTS");
+        contentCards.add(new DoctorPanel(), "DOCTORS");
+        contentCards.add(new AppointmentPanel(), "APPOINTMENTS");
 
         mainContainer.add(contentCards, BorderLayout.CENTER);
         root.add(mainContainer, BorderLayout.CENTER);
-
         setContentPane(root);
 
-        // Default selection: Patients
         selectNavigation(btnPatients, "PATIENTS", "Patient Management", "Register, manage, and view patient health records");
     }
 
@@ -91,7 +77,6 @@ public class MainFrame extends JFrame {
         sidebar.setPreferredSize(new Dimension(235, 0));
         sidebar.setBackground(navy);
 
-        // Brand panel
         JPanel brandPanel = new JPanel();
         brandPanel.setOpaque(false);
         brandPanel.setLayout(new BoxLayout(brandPanel, BoxLayout.Y_AXIS));
@@ -123,7 +108,6 @@ public class MainFrame extends JFrame {
         brandPanel.add(titleRow);
         sidebar.add(brandPanel, BorderLayout.NORTH);
 
-        // Nav buttons
         JPanel navMenu = new JPanel();
         navMenu.setOpaque(false);
         navMenu.setLayout(new BoxLayout(navMenu, BoxLayout.Y_AXIS));
@@ -156,7 +140,6 @@ public class MainFrame extends JFrame {
 
         sidebar.add(navMenu, BorderLayout.CENTER);
 
-        // Footer / Status
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
         footer.setBorder(new EmptyBorder(15, 20, 18, 20));
@@ -233,7 +216,6 @@ public class MainFrame extends JFrame {
                 new EmptyBorder(10, 25, 10, 25)
         ));
 
-        // Left title area
         JPanel titleArea = new JPanel();
         titleArea.setOpaque(false);
         titleArea.setLayout(new BoxLayout(titleArea, BoxLayout.Y_AXIS));
@@ -251,11 +233,9 @@ public class MainFrame extends JFrame {
         titleArea.add(pageSubtitleLabel);
         header.add(titleArea, BorderLayout.WEST);
 
-        // Right user profile & logout
         JPanel rightArea = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 4));
         rightArea.setOpaque(false);
 
-        // User badge
         JPanel userBadge = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         userBadge.setBackground(new Color(238, 244, 252));
         userBadge.setBorder(BorderFactory.createCompoundBorder(
@@ -273,7 +253,6 @@ public class MainFrame extends JFrame {
         userBadge.add(userIcon);
         userBadge.add(userInfo);
 
-        // Logout button
         JButton logoutBtn = new JButton("Logout");
         logoutBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
         logoutBtn.setForeground(new Color(195, 45, 45));
@@ -290,7 +269,6 @@ public class MainFrame extends JFrame {
 
         rightArea.add(userBadge);
         rightArea.add(logoutBtn);
-
         header.add(rightArea, BorderLayout.EAST);
         return header;
     }
@@ -315,7 +293,6 @@ public class MainFrame extends JFrame {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {
         }
-
         SwingUtilities.invokeLater(() -> new MainFrame("Admin", "Administrator").setVisible(true));
     }
 }

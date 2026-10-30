@@ -10,9 +10,11 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
+import java.util.regex.Pattern;
 
 public class PatientPanel extends JPanel {
 
@@ -25,9 +27,8 @@ public class PatientPanel extends JPanel {
     private final Color textDark = new Color(35, 45, 60);
     private final Color textMuted = new Color(105, 120, 135);
 
-    private final PatientServices patientServices;
+    private final PatientServices patientServices = new PatientServices();
 
-    // Form fields
     private JTextField txtId;
     private JTextField txtName;
     private JTextField txtAge;
@@ -37,44 +38,28 @@ public class PatientPanel extends JPanel {
     private JTextField txtDiagnosis;
     private JTextArea txtAddress;
 
-    // Search & Table
     private JTextField txtSearch;
     private DefaultTableModel tableModel;
     private JTable patientTable;
     private TableRowSorter<DefaultTableModel> rowSorter;
     private JLabel countLabel;
 
-    // Buttons
-    private JButton btnAdd;
-    private JButton btnUpdate;
-    private JButton btnDelete;
-    private JButton btnClear;
-
     public PatientPanel() {
-        patientServices = new PatientServices();
-
         setLayout(new BorderLayout(15, 15));
         setBackground(bgLight);
         setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        // Top Search & Stats Bar
-        JPanel topBar = createTopBar();
-        add(topBar, BorderLayout.NORTH);
+        add(createTopBar(), BorderLayout.NORTH);
 
-        // Center Split (Left: Form Card, Right: Table Card)
         JPanel mainContent = new JPanel(new BorderLayout(15, 0));
         mainContent.setOpaque(false);
 
         JPanel formCard = createFormCard();
         formCard.setPreferredSize(new Dimension(340, 0));
         mainContent.add(formCard, BorderLayout.WEST);
-
-        JPanel tableCard = createTableCard();
-        mainContent.add(tableCard, BorderLayout.CENTER);
+        mainContent.add(createTableCard(), BorderLayout.CENTER);
 
         add(mainContent, BorderLayout.CENTER);
-
-        // Load data from MySQL
         loadPatientsFromDatabase();
     }
 
@@ -83,7 +68,6 @@ public class PatientPanel extends JPanel {
         bar.setOpaque(false);
         bar.setPreferredSize(new Dimension(0, 48));
 
-        // Search panel
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         searchPanel.setOpaque(false);
 
@@ -93,30 +77,27 @@ public class PatientPanel extends JPanel {
         txtSearch = new JTextField(20);
         styleInputField(txtSearch, 36);
         txtSearch.setToolTipText("Search by Name, ID, or Phone");
+        txtSearch.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                applyFilter();
+            }
+        });
 
         JButton btnSearch = createButton("Filter", blue, Color.WHITE, 12);
         btnSearch.addActionListener(e -> applyFilter());
 
-        JButton btnResetFilter = createButton("Reset", new Color(235, 241, 248), navy, 12);
-        btnResetFilter.addActionListener(e -> {
+        JButton btnReset = createButton("Reset", new Color(235, 241, 248), navy, 12);
+        btnReset.addActionListener(e -> {
             txtSearch.setText("");
             rowSorter.setRowFilter(null);
-        });
-
-        // Quick realtime filter
-        txtSearch.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyReleased(java.awt.event.KeyEvent e) {
-                applyFilter();
-            }
         });
 
         searchPanel.add(lblSearch);
         searchPanel.add(txtSearch);
         searchPanel.add(btnSearch);
-        searchPanel.add(btnResetFilter);
+        searchPanel.add(btnReset);
 
-        // Count / summary badge on right
         JPanel badgePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 8));
         badgePanel.setOpaque(false);
 
@@ -139,11 +120,7 @@ public class PatientPanel extends JPanel {
 
     private void applyFilter() {
         String query = txtSearch.getText().trim();
-        if (query.isEmpty()) {
-            rowSorter.setRowFilter(null);
-        } else {
-            rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(query)));
-        }
+        rowSorter.setRowFilter(query.isEmpty() ? null : RowFilter.regexFilter("(?i)" + Pattern.quote(query)));
     }
 
     private JPanel createFormCard() {
@@ -154,9 +131,8 @@ public class PatientPanel extends JPanel {
                 new EmptyBorder(16, 18, 16, 18)
         ));
 
-        // Header
-        JPanel cardHeader = new JPanel(new BorderLayout());
-        cardHeader.setOpaque(false);
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
 
         JLabel title = new JLabel("Patient Details");
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -166,14 +142,13 @@ public class PatientPanel extends JPanel {
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 11));
         subtitle.setForeground(textMuted);
 
-        cardHeader.add(title, BorderLayout.NORTH);
-        cardHeader.add(subtitle, BorderLayout.SOUTH);
-        card.add(cardHeader, BorderLayout.NORTH);
+        header.add(title, BorderLayout.NORTH);
+        header.add(subtitle, BorderLayout.SOUTH);
+        card.add(header, BorderLayout.NORTH);
 
-        // Form Fields Container
-        JPanel fieldsPanel = new JPanel();
-        fieldsPanel.setLayout(new BoxLayout(fieldsPanel, BoxLayout.Y_AXIS));
-        fieldsPanel.setOpaque(false);
+        JPanel fields = new JPanel();
+        fields.setLayout(new BoxLayout(fields, BoxLayout.Y_AXIS));
+        fields.setOpaque(false);
 
         txtId = new JTextField(patientServices.getNextPatientId());
         txtId.setEditable(false);
@@ -213,47 +188,43 @@ public class PatientPanel extends JPanel {
         JScrollPane addressScroll = new JScrollPane(txtAddress);
         addressScroll.setBorder(null);
 
-        // Add fields
-        fieldsPanel.add(createFieldRow("Patient ID:", txtId));
-        fieldsPanel.add(Box.createVerticalStrut(7));
-        fieldsPanel.add(createFieldRow("Full Name *:", txtName));
-        fieldsPanel.add(Box.createVerticalStrut(7));
+        fields.add(createFieldRow("Patient ID:", txtId));
+        fields.add(Box.createVerticalStrut(7));
+        fields.add(createFieldRow("Full Name *:", txtName));
+        fields.add(Box.createVerticalStrut(7));
 
-        // Two-column row for Age & Gender
         JPanel ageGenderRow = new JPanel(new GridLayout(1, 2, 8, 0));
         ageGenderRow.setOpaque(false);
         ageGenderRow.add(createFieldRow("Age *:", txtAge));
         ageGenderRow.add(createFieldRow("Gender:", comboGender));
-        fieldsPanel.add(ageGenderRow);
-        fieldsPanel.add(Box.createVerticalStrut(7));
+        fields.add(ageGenderRow);
+        fields.add(Box.createVerticalStrut(7));
 
-        // Two-column row for Blood Group & Phone
         JPanel bloodPhoneRow = new JPanel(new GridLayout(1, 2, 8, 0));
         bloodPhoneRow.setOpaque(false);
         bloodPhoneRow.add(createFieldRow("Blood Group:", comboBlood));
         bloodPhoneRow.add(createFieldRow("Phone *:", txtPhone));
-        fieldsPanel.add(bloodPhoneRow);
-        fieldsPanel.add(Box.createVerticalStrut(7));
+        fields.add(bloodPhoneRow);
+        fields.add(Box.createVerticalStrut(7));
 
-        fieldsPanel.add(createFieldRow("Diagnosis / Reason:", txtDiagnosis));
-        fieldsPanel.add(Box.createVerticalStrut(7));
-        fieldsPanel.add(createFieldRow("Address / Notes:", addressScroll));
+        fields.add(createFieldRow("Diagnosis / Reason:", txtDiagnosis));
+        fields.add(Box.createVerticalStrut(7));
+        fields.add(createFieldRow("Address / Notes:", addressScroll));
 
-        JScrollPane formScroll = new JScrollPane(fieldsPanel);
+        JScrollPane formScroll = new JScrollPane(fields);
         formScroll.setBorder(null);
         formScroll.setOpaque(false);
         formScroll.getViewport().setOpaque(false);
         card.add(formScroll, BorderLayout.CENTER);
 
-        // Action Buttons Row
         JPanel actions = new JPanel(new GridLayout(2, 2, 8, 8));
         actions.setOpaque(false);
         actions.setBorder(new EmptyBorder(10, 0, 0, 0));
 
-        btnAdd = createButton("Add Patient", blue, Color.WHITE, 12);
-        btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
-        btnDelete = createButton("Delete", new Color(215, 60, 60), Color.WHITE, 12);
-        btnClear = createButton("Clear", new Color(235, 241, 248), navy, 12);
+        JButton btnAdd = createButton("Add Patient", blue, Color.WHITE, 12);
+        JButton btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
+        JButton btnDelete = createButton("Delete", new Color(215, 60, 60), Color.WHITE, 12);
+        JButton btnClear = createButton("Clear", new Color(235, 241, 248), navy, 12);
 
         btnAdd.addActionListener(e -> addPatient());
         btnUpdate.addActionListener(e -> updatePatient());
@@ -270,16 +241,16 @@ public class PatientPanel extends JPanel {
     }
 
     private JPanel createFieldRow(String labelText, JComponent component) {
-        JPanel p = new JPanel(new BorderLayout(0, 3));
-        p.setOpaque(false);
+        JPanel panel = new JPanel(new BorderLayout(0, 3));
+        panel.setOpaque(false);
 
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("SansSerif", Font.BOLD, 12));
         label.setForeground(textDark);
 
-        p.add(label, BorderLayout.NORTH);
-        p.add(component, BorderLayout.CENTER);
-        return p;
+        panel.add(label, BorderLayout.NORTH);
+        panel.add(component, BorderLayout.CENTER);
+        return panel;
     }
 
     private JPanel createTableCard() {
@@ -290,9 +261,8 @@ public class PatientPanel extends JPanel {
                 new EmptyBorder(14, 16, 14, 16)
         ));
 
-        // Header
-        JPanel cardHeader = new JPanel(new BorderLayout());
-        cardHeader.setOpaque(false);
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
 
         JLabel title = new JLabel("Registered Patients Directory");
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -302,11 +272,10 @@ public class PatientPanel extends JPanel {
         info.setFont(new Font("SansSerif", Font.PLAIN, 11));
         info.setForeground(textMuted);
 
-        cardHeader.add(title, BorderLayout.WEST);
-        cardHeader.add(info, BorderLayout.EAST);
-        card.add(cardHeader, BorderLayout.NORTH);
+        header.add(title, BorderLayout.WEST);
+        header.add(info, BorderLayout.EAST);
+        card.add(header, BorderLayout.NORTH);
 
-        // Table
         String[] columns = {"ID", "Full Name", "Age", "Gender", "Blood", "Phone", "Diagnosis", "Address"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -318,8 +287,6 @@ public class PatientPanel extends JPanel {
         patientTable = new JTable(tableModel);
         rowSorter = new TableRowSorter<>(tableModel);
         patientTable.setRowSorter(rowSorter);
-
-        // Styling
         patientTable.setRowHeight(32);
         patientTable.setFont(new Font("SansSerif", Font.PLAIN, 13));
         patientTable.setGridColor(new Color(235, 240, 245));
@@ -334,37 +301,25 @@ public class PatientPanel extends JPanel {
         th.setPreferredSize(new Dimension(0, 36));
         th.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, borderLight));
 
-        // Center align ID, Age, Gender, Blood
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        patientTable.getColumnModel().getColumn(0).setPreferredWidth(55);
-        patientTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        patientTable.getColumnModel().getColumn(2).setPreferredWidth(45);
-        patientTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        patientTable.getColumnModel().getColumn(3).setPreferredWidth(65);
-        patientTable.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
-        patientTable.getColumnModel().getColumn(4).setPreferredWidth(55);
-        patientTable.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
 
-        patientTable.getColumnModel().getColumn(1).setPreferredWidth(130);
-        patientTable.getColumnModel().getColumn(5).setPreferredWidth(100);
-        patientTable.getColumnModel().getColumn(6).setPreferredWidth(120);
+        int[] widths = {55, 130, 45, 65, 55, 100, 120, 140};
+        int[] centerCols = {0, 2, 3, 4};
 
-        // Selection Listener
+        for (int i = 0; i < widths.length; i++) {
+            patientTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+        for (int col : centerCols) {
+            patientTable.getColumnModel().getColumn(col).setCellRenderer(center);
+        }
+
         patientTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int row = patientTable.getSelectedRow();
                 if (row != -1) {
-                    int modelRow = patientTable.convertRowIndexToModel(row);
-                    txtId.setText(tableModel.getValueAt(modelRow, 0).toString());
-                    txtName.setText(tableModel.getValueAt(modelRow, 1).toString());
-                    txtAge.setText(tableModel.getValueAt(modelRow, 2).toString());
-                    comboGender.setSelectedItem(tableModel.getValueAt(modelRow, 3).toString());
-                    comboBlood.setSelectedItem(tableModel.getValueAt(modelRow, 4).toString());
-                    txtPhone.setText(tableModel.getValueAt(modelRow, 5).toString());
-                    txtDiagnosis.setText(tableModel.getValueAt(modelRow, 6).toString());
-                    txtAddress.setText(tableModel.getValueAt(modelRow, 7).toString());
+                    populateFormFromRow(patientTable.convertRowIndexToModel(row));
                 }
             }
         });
@@ -377,21 +332,29 @@ public class PatientPanel extends JPanel {
         return card;
     }
 
-    private void addPatient() {
+    private void populateFormFromRow(int modelRow) {
+        txtId.setText(String.valueOf(tableModel.getValueAt(modelRow, 0)));
+        txtName.setText(String.valueOf(tableModel.getValueAt(modelRow, 1)));
+        txtAge.setText(String.valueOf(tableModel.getValueAt(modelRow, 2)));
+        comboGender.setSelectedItem(String.valueOf(tableModel.getValueAt(modelRow, 3)));
+        comboBlood.setSelectedItem(String.valueOf(tableModel.getValueAt(modelRow, 4)));
+        txtPhone.setText(String.valueOf(tableModel.getValueAt(modelRow, 5)));
+        txtDiagnosis.setText(String.valueOf(tableModel.getValueAt(modelRow, 6)));
+        txtAddress.setText(String.valueOf(tableModel.getValueAt(modelRow, 7)));
+    }
+
+    private Patient parsePatientFromForm() {
+        String id = txtId.getText().trim();
         String name = txtName.getText().trim();
         String ageStr = txtAge.getText().trim();
         String phone = txtPhone.getText().trim();
-        String diagnosis = txtDiagnosis.getText().trim();
-        String address = txtAddress.getText().trim();
-        String gender = (String) comboGender.getSelectedItem();
-        String blood = (String) comboBlood.getSelectedItem();
 
         if (name.isEmpty() || ageStr.isEmpty() || phone.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "Name, Age, and Phone are required fields!",
+                    "Name, Age, and Phone are required fields.",
                     "Validation Error",
                     JOptionPane.WARNING_MESSAGE);
-            return;
+            return null;
         }
 
         int age;
@@ -405,20 +368,37 @@ public class PatientPanel extends JPanel {
                     "Please enter a valid age between 0 and 130.",
                     "Invalid Age",
                     JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+
+        return new Patient(
+                id,
+                name,
+                age,
+                (String) comboGender.getSelectedItem(),
+                (String) comboBlood.getSelectedItem(),
+                phone,
+                txtDiagnosis.getText().trim(),
+                txtAddress.getText().trim()
+        );
+    }
+
+    private void addPatient() {
+        Patient patient = parsePatientFromForm();
+        if (patient == null) {
             return;
         }
 
-        String id = txtId.getText().trim();
-        Patient p = new Patient(id, name, age, gender, blood, phone, diagnosis, address);
-
-        boolean saved = patientServices.addPatient(p);
-        if (saved) {
-            tableModel.addRow(new Object[]{id, name, ageStr, gender, blood, phone, diagnosis, address});
+        if (patientServices.addPatient(patient)) {
+            tableModel.addRow(new Object[]{
+                    patient.getId(), patient.getName(), String.valueOf(patient.getAge()),
+                    patient.getGender(), patient.getBloodGroup(), patient.getPhone(),
+                    patient.getDiagnosis(), patient.getAddress()
+            });
             JOptionPane.showMessageDialog(this,
-                    "Patient " + name + " (" + id + ") registered successfully in database!",
+                    "Patient " + patient.getName() + " (" + patient.getId() + ") registered successfully.",
                     "Patient Registered",
                     JOptionPane.INFORMATION_MESSAGE);
-
             clearForm();
             updateCount();
         } else {
@@ -439,53 +419,23 @@ public class PatientPanel extends JPanel {
             return;
         }
 
+        Patient patient = parsePatientFromForm();
+        if (patient == null) {
+            return;
+        }
+
         int modelRow = patientTable.convertRowIndexToModel(selectedRow);
-
-        String id = txtId.getText().trim();
-        String name = txtName.getText().trim();
-        String ageStr = txtAge.getText().trim();
-        String phone = txtPhone.getText().trim();
-        String diagnosis = txtDiagnosis.getText().trim();
-        String address = txtAddress.getText().trim();
-        String gender = (String) comboGender.getSelectedItem();
-        String blood = (String) comboBlood.getSelectedItem();
-
-        if (name.isEmpty() || ageStr.isEmpty() || phone.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Name, Age, and Phone are required fields!",
-                    "Validation Error",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        int age;
-        try {
-            age = Integer.parseInt(ageStr);
-            if (age < 0 || age > 130) {
-                throw new NumberFormatException();
-            }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Please enter a valid age.",
-                    "Invalid Age",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        Patient p = new Patient(id, name, age, gender, blood, phone, diagnosis, address);
-        boolean updated = patientServices.updatePatient(p);
-
-        if (updated) {
-            tableModel.setValueAt(name, modelRow, 1);
-            tableModel.setValueAt(ageStr, modelRow, 2);
-            tableModel.setValueAt(gender, modelRow, 3);
-            tableModel.setValueAt(blood, modelRow, 4);
-            tableModel.setValueAt(phone, modelRow, 5);
-            tableModel.setValueAt(diagnosis, modelRow, 6);
-            tableModel.setValueAt(address, modelRow, 7);
+        if (patientServices.updatePatient(patient)) {
+            tableModel.setValueAt(patient.getName(), modelRow, 1);
+            tableModel.setValueAt(String.valueOf(patient.getAge()), modelRow, 2);
+            tableModel.setValueAt(patient.getGender(), modelRow, 3);
+            tableModel.setValueAt(patient.getBloodGroup(), modelRow, 4);
+            tableModel.setValueAt(patient.getPhone(), modelRow, 5);
+            tableModel.setValueAt(patient.getDiagnosis(), modelRow, 6);
+            tableModel.setValueAt(patient.getAddress(), modelRow, 7);
 
             JOptionPane.showMessageDialog(this,
-                    "Patient record updated successfully in database!",
+                    "Patient record updated successfully.",
                     "Update Complete",
                     JOptionPane.INFORMATION_MESSAGE);
         } else {
@@ -507,23 +457,22 @@ public class PatientPanel extends JPanel {
         }
 
         int modelRow = patientTable.convertRowIndexToModel(selectedRow);
-        String patientName = tableModel.getValueAt(modelRow, 1).toString();
-        String patientId = tableModel.getValueAt(modelRow, 0).toString();
+        String patientName = String.valueOf(tableModel.getValueAt(modelRow, 1));
+        String patientId = String.valueOf(tableModel.getValueAt(modelRow, 0));
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to delete patient " + patientName + " (" + patientId + ") from database?",
+                "Are you sure you want to delete patient " + patientName + " (" + patientId + ")?",
                 "Confirm Deletion",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean deleted = patientServices.deletePatient(patientId);
-            if (deleted) {
+            if (patientServices.deletePatient(patientId)) {
                 tableModel.removeRow(modelRow);
                 clearForm();
                 updateCount();
                 JOptionPane.showMessageDialog(this,
-                        "Patient record deleted successfully from database.",
+                        "Patient record deleted successfully.",
                         "Deleted",
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
@@ -554,17 +503,11 @@ public class PatientPanel extends JPanel {
 
     private void loadPatientsFromDatabase() {
         tableModel.setRowCount(0);
-        List<Patient> list = patientServices.getAllPatients();
-        for (Patient p : list) {
+        for (Patient p : patientServices.getAllPatients()) {
             tableModel.addRow(new Object[]{
-                    p.getId(),
-                    p.getName(),
-                    String.valueOf(p.getAge()),
-                    p.getGender(),
-                    p.getBloodGroup(),
-                    p.getPhone(),
-                    p.getDiagnosis(),
-                    p.getAddress()
+                    p.getId(), p.getName(), String.valueOf(p.getAge()),
+                    p.getGender(), p.getBloodGroup(), p.getPhone(),
+                    p.getDiagnosis(), p.getAddress()
             });
         }
         updateCount();

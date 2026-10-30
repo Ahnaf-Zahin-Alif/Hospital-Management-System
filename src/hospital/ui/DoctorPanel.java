@@ -10,9 +10,13 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class DoctorPanel extends JPanel {
 
@@ -25,9 +29,8 @@ public class DoctorPanel extends JPanel {
     private final Color textDark = new Color(35, 45, 60);
     private final Color textMuted = new Color(105, 120, 135);
 
-    private final DoctorServices doctorServices;
+    private final DoctorServices doctorServices = new DoctorServices();
 
-    // Form fields
     private JTextField txtId;
     private JTextField txtName;
     private JComboBox<String> comboSpecialty;
@@ -38,7 +41,6 @@ public class DoctorPanel extends JPanel {
     private JTextField txtRoom;
     private JTextField txtHours;
 
-    // Search & Filter
     private JTextField txtSearch;
     private JComboBox<String> filterSpecialty;
     private DefaultTableModel tableModel;
@@ -46,37 +48,22 @@ public class DoctorPanel extends JPanel {
     private TableRowSorter<DefaultTableModel> rowSorter;
     private JLabel countLabel;
 
-    // Buttons
-    private JButton btnAdd;
-    private JButton btnUpdate;
-    private JButton btnDelete;
-    private JButton btnClear;
-
     public DoctorPanel() {
-        doctorServices = new DoctorServices();
-
         setLayout(new BorderLayout(15, 15));
         setBackground(bgLight);
         setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        // Top Filter Bar
-        JPanel topBar = createTopBar();
-        add(topBar, BorderLayout.NORTH);
+        add(createTopBar(), BorderLayout.NORTH);
 
-        // Center Split (Form Card on left, Table Card on right)
         JPanel mainContent = new JPanel(new BorderLayout(15, 0));
         mainContent.setOpaque(false);
 
         JPanel formCard = createFormCard();
         formCard.setPreferredSize(new Dimension(340, 0));
         mainContent.add(formCard, BorderLayout.WEST);
-
-        JPanel tableCard = createTableCard();
-        mainContent.add(tableCard, BorderLayout.CENTER);
+        mainContent.add(createTableCard(), BorderLayout.CENTER);
 
         add(mainContent, BorderLayout.CENTER);
-
-        // Load data from MySQL
         loadDoctorsFromDatabase();
     }
 
@@ -85,7 +72,6 @@ public class DoctorPanel extends JPanel {
         bar.setOpaque(false);
         bar.setPreferredSize(new Dimension(0, 48));
 
-        // Search + Specialty filter
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         searchPanel.setOpaque(false);
 
@@ -95,11 +81,21 @@ public class DoctorPanel extends JPanel {
         txtSearch = new JTextField(15);
         styleInputField(txtSearch, 36);
         txtSearch.setToolTipText("Search by Doctor Name, ID, or Phone");
+        txtSearch.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                applyFilters();
+            }
+        });
 
-        String[] filterOptions = {"All Specialties", "Cardiology", "Neurology", "Pediatrics", "Orthopedics", "General Medicine", "Dermatology", "Oncology"};
-        filterSpecialty = new JComboBox<>(filterOptions);
+        String[] specialties = {
+                "All Specialties", "Cardiology", "Neurology", "Pediatrics",
+                "Orthopedics", "General Medicine", "Dermatology", "Oncology"
+        };
+        filterSpecialty = new JComboBox<>(specialties);
         styleComboBox(filterSpecialty);
         filterSpecialty.setPreferredSize(new Dimension(145, 36));
+        filterSpecialty.addActionListener(e -> applyFilters());
 
         JButton btnFilter = createButton("Filter", blue, Color.WHITE, 12);
         btnFilter.addActionListener(e -> applyFilters());
@@ -111,22 +107,12 @@ public class DoctorPanel extends JPanel {
             rowSorter.setRowFilter(null);
         });
 
-        txtSearch.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyReleased(java.awt.event.KeyEvent e) {
-                applyFilters();
-            }
-        });
-
-        filterSpecialty.addActionListener(e -> applyFilters());
-
         searchPanel.add(lblSearch);
         searchPanel.add(txtSearch);
         searchPanel.add(filterSpecialty);
         searchPanel.add(btnFilter);
         searchPanel.add(btnReset);
 
-        // Stats badge
         JPanel badgePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 8));
         badgePanel.setOpaque(false);
 
@@ -151,21 +137,15 @@ public class DoctorPanel extends JPanel {
         String query = txtSearch.getText().trim();
         String specialty = (String) filterSpecialty.getSelectedItem();
 
-        java.util.List<RowFilter<Object, Object>> filters = new java.util.ArrayList<>();
-
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
         if (!query.isEmpty()) {
-            filters.add(RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(query)));
+            filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(query)));
+        }
+        if (specialty != null && !"All Specialties".equals(specialty)) {
+            filters.add(RowFilter.regexFilter("(?i)" + Pattern.quote(specialty), 2));
         }
 
-        if (specialty != null && !specialty.equals("All Specialties")) {
-            filters.add(RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(specialty), 2));
-        }
-
-        if (filters.isEmpty()) {
-            rowSorter.setRowFilter(null);
-        } else {
-            rowSorter.setRowFilter(RowFilter.andFilter(filters));
-        }
+        rowSorter.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
     }
 
     private JPanel createFormCard() {
@@ -176,7 +156,6 @@ public class DoctorPanel extends JPanel {
                 new EmptyBorder(16, 18, 16, 18)
         ));
 
-        // Header
         JPanel cardHeader = new JPanel(new BorderLayout());
         cardHeader.setOpaque(false);
 
@@ -192,10 +171,9 @@ public class DoctorPanel extends JPanel {
         cardHeader.add(subtitle, BorderLayout.SOUTH);
         card.add(cardHeader, BorderLayout.NORTH);
 
-        // Fields Container
-        JPanel fieldsPanel = new JPanel();
-        fieldsPanel.setLayout(new BoxLayout(fieldsPanel, BoxLayout.Y_AXIS));
-        fieldsPanel.setOpaque(false);
+        JPanel fields = new JPanel();
+        fields.setLayout(new BoxLayout(fields, BoxLayout.Y_AXIS));
+        fields.setOpaque(false);
 
         txtId = new JTextField(doctorServices.getNextDoctorId());
         txtId.setEditable(false);
@@ -205,7 +183,10 @@ public class DoctorPanel extends JPanel {
         txtName = new JTextField();
         styleInputField(txtName, 32);
 
-        String[] specialties = {"General Medicine", "Cardiology", "Neurology", "Pediatrics", "Orthopedics", "Dermatology", "Oncology", "General Surgery"};
+        String[] specialties = {
+                "General Medicine", "Cardiology", "Neurology", "Pediatrics",
+                "Orthopedics", "Dermatology", "Oncology", "General Surgery"
+        };
         comboSpecialty = new JComboBox<>(specialties);
         styleComboBox(comboSpecialty);
 
@@ -227,49 +208,45 @@ public class DoctorPanel extends JPanel {
         txtHours = new JTextField();
         styleInputField(txtHours, 32);
 
-        // Add fields
-        fieldsPanel.add(createFieldRow("Doctor ID:", txtId));
-        fieldsPanel.add(Box.createVerticalStrut(6));
-        fieldsPanel.add(createFieldRow("Doctor Name *:", txtName));
-        fieldsPanel.add(Box.createVerticalStrut(6));
-        fieldsPanel.add(createFieldRow("Specialization:", comboSpecialty));
-        fieldsPanel.add(Box.createVerticalStrut(6));
-        fieldsPanel.add(createFieldRow("Degree / Qualification:", txtQualification));
-        fieldsPanel.add(Box.createVerticalStrut(6));
+        fields.add(createFieldRow("Doctor ID:", txtId));
+        fields.add(Box.createVerticalStrut(6));
+        fields.add(createFieldRow("Doctor Name *:", txtName));
+        fields.add(Box.createVerticalStrut(6));
+        fields.add(createFieldRow("Specialization:", comboSpecialty));
+        fields.add(Box.createVerticalStrut(6));
+        fields.add(createFieldRow("Degree / Qualification:", txtQualification));
+        fields.add(Box.createVerticalStrut(6));
 
-        // Phone & Email Row
         JPanel contactRow = new JPanel(new GridLayout(1, 2, 8, 0));
         contactRow.setOpaque(false);
         contactRow.add(createFieldRow("Phone *:", txtPhone));
         contactRow.add(createFieldRow("Email:", txtEmail));
-        fieldsPanel.add(contactRow);
-        fieldsPanel.add(Box.createVerticalStrut(6));
+        fields.add(contactRow);
+        fields.add(Box.createVerticalStrut(6));
 
-        // Fee & Room Row
         JPanel feeRoomRow = new JPanel(new GridLayout(1, 2, 8, 0));
         feeRoomRow.setOpaque(false);
         feeRoomRow.add(createFieldRow("Fee ($) *:", txtFee));
         feeRoomRow.add(createFieldRow("Room No *:", txtRoom));
-        fieldsPanel.add(feeRoomRow);
-        fieldsPanel.add(Box.createVerticalStrut(6));
+        fields.add(feeRoomRow);
+        fields.add(Box.createVerticalStrut(6));
 
-        fieldsPanel.add(createFieldRow("Visiting Hours:", txtHours));
+        fields.add(createFieldRow("Visiting Hours:", txtHours));
 
-        JScrollPane formScroll = new JScrollPane(fieldsPanel);
+        JScrollPane formScroll = new JScrollPane(fields);
         formScroll.setBorder(null);
         formScroll.setOpaque(false);
         formScroll.getViewport().setOpaque(false);
         card.add(formScroll, BorderLayout.CENTER);
 
-        // Action Buttons Row
         JPanel actions = new JPanel(new GridLayout(2, 2, 8, 8));
         actions.setOpaque(false);
         actions.setBorder(new EmptyBorder(10, 0, 0, 0));
 
-        btnAdd = createButton("Add Doctor", blue, Color.WHITE, 12);
-        btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
-        btnDelete = createButton("Delete", new Color(215, 60, 60), Color.WHITE, 12);
-        btnClear = createButton("Clear", new Color(235, 241, 248), navy, 12);
+        JButton btnAdd = createButton("Add Doctor", blue, Color.WHITE, 12);
+        JButton btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
+        JButton btnDelete = createButton("Delete", new Color(215, 60, 60), Color.WHITE, 12);
+        JButton btnClear = createButton("Clear", new Color(235, 241, 248), navy, 12);
 
         btnAdd.addActionListener(e -> addDoctor());
         btnUpdate.addActionListener(e -> updateDoctor());
@@ -286,16 +263,16 @@ public class DoctorPanel extends JPanel {
     }
 
     private JPanel createFieldRow(String labelText, JComponent component) {
-        JPanel p = new JPanel(new BorderLayout(0, 3));
-        p.setOpaque(false);
+        JPanel panel = new JPanel(new BorderLayout(0, 3));
+        panel.setOpaque(false);
 
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("SansSerif", Font.BOLD, 12));
         label.setForeground(textDark);
 
-        p.add(label, BorderLayout.NORTH);
-        p.add(component, BorderLayout.CENTER);
-        return p;
+        panel.add(label, BorderLayout.NORTH);
+        panel.add(component, BorderLayout.CENTER);
+        return panel;
     }
 
     private JPanel createTableCard() {
@@ -306,9 +283,8 @@ public class DoctorPanel extends JPanel {
                 new EmptyBorder(14, 16, 14, 16)
         ));
 
-        // Header
-        JPanel cardHeader = new JPanel(new BorderLayout());
-        cardHeader.setOpaque(false);
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
 
         JLabel title = new JLabel("Doctors & Specialists Directory");
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -318,11 +294,10 @@ public class DoctorPanel extends JPanel {
         info.setFont(new Font("SansSerif", Font.PLAIN, 11));
         info.setForeground(textMuted);
 
-        cardHeader.add(title, BorderLayout.WEST);
-        cardHeader.add(info, BorderLayout.EAST);
-        card.add(cardHeader, BorderLayout.NORTH);
+        header.add(title, BorderLayout.WEST);
+        header.add(info, BorderLayout.EAST);
+        card.add(header, BorderLayout.NORTH);
 
-        // Table
         String[] columns = {"ID", "Doctor Name", "Specialization", "Qualification", "Phone", "Fee ($)", "Room", "Visiting Hours"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -334,7 +309,6 @@ public class DoctorPanel extends JPanel {
         doctorTable = new JTable(tableModel);
         rowSorter = new TableRowSorter<>(tableModel);
         doctorTable.setRowSorter(rowSorter);
-
         doctorTable.setRowHeight(32);
         doctorTable.setFont(new Font("SansSerif", Font.PLAIN, 13));
         doctorTable.setGridColor(new Color(235, 240, 245));
@@ -349,36 +323,25 @@ public class DoctorPanel extends JPanel {
         th.setPreferredSize(new Dimension(0, 36));
         th.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, borderLight));
 
-        // Center align ID, Fee, Room
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        doctorTable.getColumnModel().getColumn(0).setPreferredWidth(65);
-        doctorTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        doctorTable.getColumnModel().getColumn(5).setPreferredWidth(55);
-        doctorTable.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
-        doctorTable.getColumnModel().getColumn(6).setPreferredWidth(55);
-        doctorTable.getColumnModel().getColumn(6).setCellRenderer(centerRenderer);
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
 
-        doctorTable.getColumnModel().getColumn(1).setPreferredWidth(130);
-        doctorTable.getColumnModel().getColumn(2).setPreferredWidth(110);
-        doctorTable.getColumnModel().getColumn(4).setPreferredWidth(100);
-        doctorTable.getColumnModel().getColumn(7).setPreferredWidth(140);
+        int[] centerCols = {0, 5, 6};
+        int[] widths = {65, 130, 110, 110, 100, 55, 55, 140};
 
-        // Click to populate form
+        for (int i = 0; i < widths.length; i++) {
+            doctorTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+        for (int col : centerCols) {
+            doctorTable.getColumnModel().getColumn(col).setCellRenderer(center);
+        }
+
         doctorTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int row = doctorTable.getSelectedRow();
                 if (row != -1) {
-                    int modelRow = doctorTable.convertRowIndexToModel(row);
-                    txtId.setText(tableModel.getValueAt(modelRow, 0).toString());
-                    txtName.setText(tableModel.getValueAt(modelRow, 1).toString());
-                    comboSpecialty.setSelectedItem(tableModel.getValueAt(modelRow, 2).toString());
-                    txtQualification.setText(tableModel.getValueAt(modelRow, 3).toString());
-                    txtPhone.setText(tableModel.getValueAt(modelRow, 4).toString());
-                    txtFee.setText(tableModel.getValueAt(modelRow, 5).toString());
-                    txtRoom.setText(tableModel.getValueAt(modelRow, 6).toString());
-                    txtHours.setText(tableModel.getValueAt(modelRow, 7).toString());
+                    populateFormFromRow(doctorTable.convertRowIndexToModel(row));
                 }
             }
         });
@@ -391,22 +354,30 @@ public class DoctorPanel extends JPanel {
         return card;
     }
 
-    private void addDoctor() {
+    private void populateFormFromRow(int modelRow) {
+        txtId.setText(String.valueOf(tableModel.getValueAt(modelRow, 0)));
+        txtName.setText(String.valueOf(tableModel.getValueAt(modelRow, 1)));
+        comboSpecialty.setSelectedItem(String.valueOf(tableModel.getValueAt(modelRow, 2)));
+        txtQualification.setText(String.valueOf(tableModel.getValueAt(modelRow, 3)));
+        txtPhone.setText(String.valueOf(tableModel.getValueAt(modelRow, 4)));
+        txtFee.setText(String.valueOf(tableModel.getValueAt(modelRow, 5)));
+        txtRoom.setText(String.valueOf(tableModel.getValueAt(modelRow, 6)));
+        txtHours.setText(String.valueOf(tableModel.getValueAt(modelRow, 7)));
+    }
+
+    private Doctor parseDoctorFromForm() {
+        String id = txtId.getText().trim();
         String name = txtName.getText().trim();
-        String specialty = (String) comboSpecialty.getSelectedItem();
-        String qual = txtQualification.getText().trim();
         String phone = txtPhone.getText().trim();
-        String email = txtEmail.getText().trim();
         String fee = txtFee.getText().trim();
         String room = txtRoom.getText().trim();
-        String hours = txtHours.getText().trim();
 
         if (name.isEmpty() || phone.isEmpty() || fee.isEmpty() || room.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "Name, Phone, Fee, and Room No are required fields!",
+                    "Name, Phone, Fee, and Room No are required fields.",
                     "Validation Error",
                     JOptionPane.WARNING_MESSAGE);
-            return;
+            return null;
         }
 
         try {
@@ -416,20 +387,38 @@ public class DoctorPanel extends JPanel {
                     "Please enter a valid numeric consultation fee.",
                     "Invalid Fee",
                     JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+
+        return new Doctor(
+                id,
+                name,
+                (String) comboSpecialty.getSelectedItem(),
+                txtQualification.getText().trim(),
+                phone,
+                txtEmail.getText().trim(),
+                fee,
+                room,
+                txtHours.getText().trim()
+        );
+    }
+
+    private void addDoctor() {
+        Doctor doctor = parseDoctorFromForm();
+        if (doctor == null) {
             return;
         }
 
-        String id = txtId.getText().trim();
-        Doctor d = new Doctor(id, name, specialty, qual, phone, email, fee, room, hours);
-
-        boolean saved = doctorServices.addDoctor(d);
-        if (saved) {
-            tableModel.addRow(new Object[]{id, name, specialty, qual, phone, fee, room, hours});
+        if (doctorServices.addDoctor(doctor)) {
+            tableModel.addRow(new Object[]{
+                    doctor.getId(), doctor.getName(), doctor.getSpecialty(),
+                    doctor.getQualification(), doctor.getPhone(), doctor.getFee(),
+                    doctor.getRoom(), doctor.getVisitingHours()
+            });
             JOptionPane.showMessageDialog(this,
-                    "Dr. " + name + " (" + id + ") registered successfully in database!",
+                    "Dr. " + doctor.getName() + " (" + doctor.getId() + ") registered successfully.",
                     "Doctor Added",
                     JOptionPane.INFORMATION_MESSAGE);
-
             clearForm();
             updateCount();
         } else {
@@ -450,50 +439,23 @@ public class DoctorPanel extends JPanel {
             return;
         }
 
+        Doctor doctor = parseDoctorFromForm();
+        if (doctor == null) {
+            return;
+        }
+
         int modelRow = doctorTable.convertRowIndexToModel(selectedRow);
-
-        String id = txtId.getText().trim();
-        String name = txtName.getText().trim();
-        String specialty = (String) comboSpecialty.getSelectedItem();
-        String qual = txtQualification.getText().trim();
-        String phone = txtPhone.getText().trim();
-        String email = txtEmail.getText().trim();
-        String fee = txtFee.getText().trim();
-        String room = txtRoom.getText().trim();
-        String hours = txtHours.getText().trim();
-
-        if (name.isEmpty() || phone.isEmpty() || fee.isEmpty() || room.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Name, Phone, Fee, and Room No are required fields!",
-                    "Validation Error",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        try {
-            Double.parseDouble(fee.replace("$", "").trim());
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Please enter a valid numeric consultation fee.",
-                    "Invalid Fee",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        Doctor d = new Doctor(id, name, specialty, qual, phone, email, fee, room, hours);
-        boolean updated = doctorServices.updateDoctor(d);
-
-        if (updated) {
-            tableModel.setValueAt(name, modelRow, 1);
-            tableModel.setValueAt(specialty, modelRow, 2);
-            tableModel.setValueAt(qual, modelRow, 3);
-            tableModel.setValueAt(phone, modelRow, 4);
-            tableModel.setValueAt(fee, modelRow, 5);
-            tableModel.setValueAt(room, modelRow, 6);
-            tableModel.setValueAt(hours, modelRow, 7);
+        if (doctorServices.updateDoctor(doctor)) {
+            tableModel.setValueAt(doctor.getName(), modelRow, 1);
+            tableModel.setValueAt(doctor.getSpecialty(), modelRow, 2);
+            tableModel.setValueAt(doctor.getQualification(), modelRow, 3);
+            tableModel.setValueAt(doctor.getPhone(), modelRow, 4);
+            tableModel.setValueAt(doctor.getFee(), modelRow, 5);
+            tableModel.setValueAt(doctor.getRoom(), modelRow, 6);
+            tableModel.setValueAt(doctor.getVisitingHours(), modelRow, 7);
 
             JOptionPane.showMessageDialog(this,
-                    "Doctor details updated successfully in database!",
+                    "Doctor details updated successfully.",
                     "Update Complete",
                     JOptionPane.INFORMATION_MESSAGE);
         } else {
@@ -515,23 +477,22 @@ public class DoctorPanel extends JPanel {
         }
 
         int modelRow = doctorTable.convertRowIndexToModel(selectedRow);
-        String docName = tableModel.getValueAt(modelRow, 1).toString();
-        String docId = tableModel.getValueAt(modelRow, 0).toString();
+        String docName = String.valueOf(tableModel.getValueAt(modelRow, 1));
+        String docId = String.valueOf(tableModel.getValueAt(modelRow, 0));
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to remove " + docName + " (" + docId + ") from database?",
+                "Are you sure you want to remove " + docName + " (" + docId + ")?",
                 "Confirm Removal",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean deleted = doctorServices.deleteDoctor(docId);
-            if (deleted) {
+            if (doctorServices.deleteDoctor(docId)) {
                 tableModel.removeRow(modelRow);
                 clearForm();
                 updateCount();
                 JOptionPane.showMessageDialog(this,
-                        "Doctor record removed from database.",
+                        "Doctor record removed.",
                         "Doctor Removed",
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
@@ -563,17 +524,10 @@ public class DoctorPanel extends JPanel {
 
     private void loadDoctorsFromDatabase() {
         tableModel.setRowCount(0);
-        List<Doctor> list = doctorServices.getAllDoctors();
-        for (Doctor d : list) {
+        for (Doctor d : doctorServices.getAllDoctors()) {
             tableModel.addRow(new Object[]{
-                    d.getId(),
-                    d.getName(),
-                    d.getSpecialty(),
-                    d.getQualification(),
-                    d.getPhone(),
-                    d.getFee(),
-                    d.getRoom(),
-                    d.getVisitingHours()
+                    d.getId(), d.getName(), d.getSpecialty(), d.getQualification(),
+                    d.getPhone(), d.getFee(), d.getRoom(), d.getVisitingHours()
             });
         }
         updateCount();
