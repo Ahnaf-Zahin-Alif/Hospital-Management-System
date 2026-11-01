@@ -2,13 +2,6 @@ package hospital.ui;
 
 import hospital.model.Appointment;
 import hospital.services.AppointmentServices;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -19,6 +12,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableRowSorter;
 
 public class AppointmentPanel extends JPanel {
 
@@ -38,6 +37,7 @@ public class AppointmentPanel extends JPanel {
     private JTextField txtDoctor;
     private JTextField txtDate;
     private JComboBox<String> comboTime;
+
     private JComboBox<String> comboDepartment;
     private JComboBox<String> comboStatus;
     private JTextArea txtNotes;
