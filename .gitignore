@@ -12,3 +12,6 @@ bin/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Local team guides
+CODE_WALKTHROUGH.md
