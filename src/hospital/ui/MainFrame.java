@@ -28,6 +28,9 @@ public class MainFrame extends JFrame {
     private JButton btnPatients;
     private JButton btnDoctors;
     private JButton btnAppointments;
+    private JButton btnBilling;
+    private JButton btnWards;
+    private JButton btnPharmacy;
     private JButton activeButton;
 
     public MainFrame() {
@@ -43,8 +46,8 @@ public class MainFrame extends JFrame {
 
     private void initUI() {
         setTitle("MediCare Hospital Management System");
-        setSize(1150, 720);
-        setMinimumSize(new Dimension(980, 620));
+        setSize(1200, 750);
+        setMinimumSize(new Dimension(1020, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -64,6 +67,9 @@ public class MainFrame extends JFrame {
         contentCards.add(new PatientPanel(), "PATIENTS");
         contentCards.add(new DoctorPanel(), "DOCTORS");
         contentCards.add(new AppointmentPanel(), "APPOINTMENTS");
+        contentCards.add(new BillingPanel(), "BILLING");
+        contentCards.add(new WardPanel(), "WARDS");
+        contentCards.add(new PharmacyPanel(), "PHARMACY");
 
         mainContainer.add(contentCards, BorderLayout.CENTER);
         root.add(mainContainer, BorderLayout.CENTER);
@@ -122,6 +128,9 @@ public class MainFrame extends JFrame {
         btnPatients = createNavButton("\uD83D\uDC65  Patients");
         btnDoctors = createNavButton("\uD83E\uDE7A  Doctors");
         btnAppointments = createNavButton("\uD83D\uDCC5  Appointments");
+        btnBilling = createNavButton("\uD83D\uDCB3  Billing & Invoices");
+        btnWards = createNavButton("\uD83D\uDECF\uFE0F  Wards & Beds");
+        btnPharmacy = createNavButton("\uD83D\uDC8A  Pharmacy Stock");
 
         btnPatients.addActionListener(e -> selectNavigation(
                 btnPatients, "PATIENTS", "Patient Management", "Register, manage, and view patient health records"));
@@ -132,11 +141,26 @@ public class MainFrame extends JFrame {
         btnAppointments.addActionListener(e -> selectNavigation(
                 btnAppointments, "APPOINTMENTS", "Appointment Scheduling", "Schedule and manage doctor appointments and bookings"));
 
+        btnBilling.addActionListener(e -> selectNavigation(
+                btnBilling, "BILLING", "Billing & Invoicing", "Manage patient bills, consultations, and payment receipts"));
+
+        btnWards.addActionListener(e -> selectNavigation(
+                btnWards, "WARDS", "Ward & Bed Management", "Track hospital bed occupancy, admissions, and discharge"));
+
+        btnPharmacy.addActionListener(e -> selectNavigation(
+                btnPharmacy, "PHARMACY", "Pharmacy & Inventory", "Manage medicine stock, pricing, and catalog"));
+
         navMenu.add(btnPatients);
-        navMenu.add(Box.createVerticalStrut(8));
+        navMenu.add(Box.createVerticalStrut(6));
         navMenu.add(btnDoctors);
-        navMenu.add(Box.createVerticalStrut(8));
+        navMenu.add(Box.createVerticalStrut(6));
         navMenu.add(btnAppointments);
+        navMenu.add(Box.createVerticalStrut(6));
+        navMenu.add(btnBilling);
+        navMenu.add(Box.createVerticalStrut(6));
+        navMenu.add(btnWards);
+        navMenu.add(Box.createVerticalStrut(6));
+        navMenu.add(btnPharmacy);
 
         sidebar.add(navMenu, BorderLayout.CENTER);
 

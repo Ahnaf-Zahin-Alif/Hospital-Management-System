@@ -14,8 +14,11 @@
 - **Patient Records Management**: Complete patient onboarding with sequential ID generation (`P-101`), demographic details, blood group, contact information, diagnosis records, and real-time search filtering.
 - **Doctor Directory & Scheduling**: Medical specialist directory tracking department specializations, consultation fees, chamber room numbers, qualifications, and visiting hours with specialty filters.
 - **Appointment Scheduling**: Consultation booking linking patients and doctors with time-slot allocations, department routing, notes, and visual status badges (`Scheduled`, `Completed`, `Cancelled`).
-- **Interactive UI with Click-to-Edit**: Responsive Swing desktop UI featuring tab navigation, formatted data tables, and click-to-edit row synchronization.
-- **Automated Schema Provisioning**: Built-in table initialization in `DbConnection` automatically detects, provisions, and seeds required MySQL schema on first run.
+- **Billing & Invoicing Panel**: Comprehensive hospital invoice creation with auto-calculated totals across consultations, medical treatments, and prescriptions. Supports multiple payment methods (`Cash`, `Card`, `Insurance`, `Bank Transfer`), status badges (`Paid`, `Pending`, `Partial`), and a formatted pop-up receipt preview.
+- **Ward & Bed Management**: Inpatient occupancy tracking across hospital wards (`ICU`, `General Ward`, `Emergency`, `Maternity`, `Pediatric`). Includes status indicators (`Occupied`, `Available`, `Under Maintenance`), admission date tracking, and an automated discharge calculator computing length of stay and total hospital room fees.
+- **Pharmacy & Medicine Inventory**: Pharmaceutical catalog tracking stock quantities, unit pricing, expiry dates, categories, and manufacturers. Provides automatic real-time low-stock alerts (`<15` units), quick one-click dispensing (`-1`), and batch inventory restock adjustments.
+- **Interactive UI with Click-to-Edit**: Responsive Swing desktop UI featuring sidebar navigation, formatted data tables, and click-to-edit row synchronization.
+- **Automated Schema Provisioning**: Built-in table initialization in `DbConnection` automatically detects, provisions, and seeds required MySQL schema for all 7 tables on first run.
 
 ---
 
@@ -43,24 +46,36 @@ flowchart TD
         PP["PatientPanel"]
         DP["DoctorPanel"]
         AP["AppointmentPanel"]
+        BP["BillingPanel"]
+        WP["WardPanel"]
+        PH["PharmacyPanel"]
     end
 
     subgraph Service ["Business Logic Layer (hospital.services)"]
         PS["PatientServices"]
         DS["DoctorServices"]
         AS["AppointmentServices"]
+        BS["BillServices"]
+        WS["BedServices"]
+        MS["MedicineServices"]
     end
 
     subgraph Repo ["Persistence Layer (hospital.repository)"]
         PR["PatientRepo"]
         DR["DoctorRepo"]
         AR["AppointmentRepo"]
+        BR["BillRepo"]
+        WR["BedRepo"]
+        MR["MedicineRepo"]
     end
 
     subgraph Model ["Domain Models (hospital.model)"]
         MP["Patient"]
         MD["Doctor"]
         MA["Appointment"]
+        MB["Bill"]
+        MW["Bed"]
+        MM["Medicine"]
     end
 
     subgraph DB ["Database (hospital.utils)"]
@@ -72,18 +87,30 @@ flowchart TD
     MF --> PP
     MF --> DP
     MF --> AP
+    MF --> BP
+    MF --> WP
+    MF --> PH
 
     PP --> PS
     DP --> DS
     AP --> AS
+    BP --> BS
+    WP --> WS
+    PH --> MS
 
     PS --> PR
     DS --> DR
     AS --> AR
+    BS --> BR
+    WS --> WR
+    MS --> MR
 
     PR --> DBC
     DR --> DBC
     AR --> DBC
+    BR --> DBC
+    WR --> DBC
+    MR --> DBC
     LF --> DBC
 
     DBC --> MYSQL
@@ -91,6 +118,9 @@ flowchart TD
     PR -.-> MP
     DR -.-> MD
     AR -.-> MA
+    BR -.-> MB
+    WR -.-> MW
+    MR -.-> MM
 ```
 
 ---
@@ -108,24 +138,36 @@ Hospital Management System/
 │       ├── App.java            # Application bootstrap and startup routine
 │       ├── model/              # Domain entities
 │       │   ├── Appointment.java
+│       │   ├── Bed.java
+│       │   ├── Bill.java
 │       │   ├── Doctor.java
+│       │   ├── Medicine.java
 │       │   └── Patient.java
 │       ├── repository/         # Data access objects (PreparedStatements & SQL)
 │       │   ├── AppointmentRepo.java
+│       │   ├── BedRepo.java
+│       │   ├── BillRepo.java
 │       │   ├── DoctorRepo.java
+│       │   ├── MedicineRepo.java
 │       │   └── PatientRepo.java
 │       ├── services/           # Service layer coordinating business operations
 │       │   ├── AppointmentServices.java
+│       │   ├── BedServices.java
+│       │   ├── BillServices.java
 │       │   ├── DoctorServices.java
+│       │   ├── MedicineServices.java
 │       │   └── PatientServices.java
 │       ├── ui/                 # Swing GUI views and custom component cards
 │       │   ├── AppointmentPanel.java
+│       │   ├── BillingPanel.java
 │       │   ├── DoctorPanel.java
 │       │   ├── LoginFrame.java
 │       │   ├── MainFrame.java
-│       │   └── PatientPanel.java
+│       │   ├── PatientPanel.java
+│       │   ├── PharmacyPanel.java
+│       │   └── WardPanel.java
 │       └── utils/
-│           └── DbConnection.java # JDBC connection pool provider & table bootstrap
+│           └── DbConnection.java # JDBC connection provider & table bootstrap
 ├── .gitignore                  # Git exclusion rules (build artifacts & binaries)
 ├── README.md                   # Project documentation
 ├── run.bat                     # Windows compilation and execution script
@@ -213,6 +255,9 @@ The database comes pre-seeded with three default accounts for testing:
 2. **Patient Registration**: Open the **Patients** tab. Fill in patient information and click **Add Patient**. Use the filter input above the table to search existing records by name, phone, or ID.
 3. **Doctor Directory**: Open the **Doctors** tab to browse active physicians, filter by specialty, or update consultation fees and chamber rooms.
 4. **Appointment Booking**: Open the **Appointments** tab. Select the patient, attending doctor, preferred time slot, and clinical notes, then click **Book Visit**. Click an existing booking to update status or reschedule.
+5. **Billing & Invoices**: Open the **Billing & Invoices** tab to generate itemized invoices combining consultation, treatment, and medication fees. Select any invoice to preview or print a formatted patient receipt.
+6. **Ward & Bed Management**: Open the **Wards & Beds** tab to monitor bed availability across ICU, Emergency, and general wards. Assign incoming patients to vacant beds, or select an occupied bed to calculate the stay duration and discharge the patient.
+7. **Pharmacy & Medicine Stock**: Open the **Pharmacy Stock** tab to view drug inventories, filter by medical category or stock status, replenish supplies with the **Adjust Stock** tool, or dispense prescriptions with quick action buttons.
 
 ---
 
