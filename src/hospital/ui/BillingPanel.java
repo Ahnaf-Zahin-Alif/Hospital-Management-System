@@ -276,13 +276,10 @@ public class BillingPanel extends JPanel {
     }
 
     private void calculateTotal() {
-        try {
-            double c = parseSafe(txtConsultationFee.getText());
-            double t = parseSafe(txtTreatmentFee.getText());
-            double m = parseSafe(txtMedicineFee.getText());
-            txtTotalAmount.setText(String.format("%.2f", c + t + m));
-        } catch (Exception ignored) {
-        }
+        double c = parseSafe(txtConsultationFee.getText());
+        double t = parseSafe(txtTreatmentFee.getText());
+        double m = parseSafe(txtMedicineFee.getText());
+        txtTotalAmount.setText(String.format("%.2f", c + t + m));
     }
 
     private double parseSafe(String text) {

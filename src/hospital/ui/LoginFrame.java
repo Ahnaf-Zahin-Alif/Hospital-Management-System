@@ -8,6 +8,7 @@ import java.awt.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class LoginFrame extends JFrame {
 
@@ -81,7 +82,7 @@ public class LoginFrame extends JFrame {
         JButton loginButton = new JButton("Login");
 
         styleButton(clearButton, new Color(235, 241, 248), navy, false);
-        styleButton(loginButton, blue, Color.BLACK, true);
+        styleButton(loginButton, blue, Color.WHITE, true);
 
         buttonPanel.add(clearButton);
         buttonPanel.add(loginButton);
@@ -180,14 +181,10 @@ public class LoginFrame extends JFrame {
             try (ResultSet rs = ps.executeQuery()) {
                 authenticated = rs.next();
             }
-        } catch (Exception ex) {
-            if ("Admin".equals(role) && "admin".equals(username) && "admin123".equals(password)) {
-                authenticated = true;
-            } else if ("Receptionist".equals(role) && "staff".equals(username) && "staff123".equals(password)) {
-                authenticated = true;
-            } else if ("Doctor".equals(role) && "doctor".equals(username) && "doc123".equals(password)) {
-                authenticated = true;
-            }
+        } catch (SQLException ex) {
+            authenticated = ("Admin".equals(role) && "admin".equals(username) && "admin123".equals(password))
+                    || ("Receptionist".equals(role) && "staff".equals(username) && "staff123".equals(password))
+                    || ("Doctor".equals(role) && "doctor".equals(username) && "doc123".equals(password));
         }
 
         if (authenticated) {

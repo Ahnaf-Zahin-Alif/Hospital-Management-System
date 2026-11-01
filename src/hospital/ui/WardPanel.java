@@ -16,6 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -498,7 +499,7 @@ public class WardPanel extends JPanel {
                 LocalDate start = LocalDate.parse(admDate);
                 days = Math.max(1, ChronoUnit.DAYS.between(start, LocalDate.now()));
             }
-        } catch (Exception ignored) {
+        } catch (DateTimeParseException ignored) {
         }
         double stayTotal = days * dailyRate;
 

@@ -609,10 +609,11 @@ public class PharmacyPanel extends JPanel {
     }
 
     private void styleInputField(JTextField field, int height) {
-        field.setPreferredSize(new Dimension(field.getPreferredSize().width, height));
         field.setFont(new Font("SansSerif", Font.PLAIN, 13));
         field.setForeground(textDark);
+        field.setBackground(new Color(250, 252, 255));
         field.setCaretColor(blue);
+        field.setPreferredSize(new Dimension(field.getPreferredSize().width, height));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(borderLight, 1),
                 new EmptyBorder(4, 10, 4, 10)
@@ -623,6 +624,7 @@ public class PharmacyPanel extends JPanel {
         box.setFont(new Font("SansSerif", Font.PLAIN, 13));
         box.setBackground(Color.WHITE);
         box.setForeground(textDark);
+        box.setPreferredSize(new Dimension(box.getPreferredSize().width, 32));
         box.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(borderLight, 1),
                 new EmptyBorder(2, 6, 2, 6)
@@ -635,10 +637,25 @@ public class PharmacyPanel extends JPanel {
         btn.setBackground(bg);
         btn.setForeground(fg);
         btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
         btn.setOpaque(true);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(new EmptyBorder(8, 12, 8, 12));
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(bg.darker(), 1),
+                new EmptyBorder(8, 14, 8, 14)
+        ));
+
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                btn.setBackground(bg.equals(blue) ? blueHover : bg.darker());
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btn.setBackground(bg);
+            }
+        });
+
         return btn;
     }
 }
