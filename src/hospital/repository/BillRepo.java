@@ -117,7 +117,7 @@ public class BillRepo {
                 int nextNum = Integer.parseInt(numPart) + 1;
                 return "BILL-" + nextNum;
             }
-        } catch (Exception ignored) {
+        } catch (SQLException | NumberFormatException ignored) {
         }
         return "BILL-401";
     }

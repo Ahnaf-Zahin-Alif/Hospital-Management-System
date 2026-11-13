@@ -12,7 +12,6 @@ public class DbConnection {
     private static final String DB_NAME = "hospital_db";
     private static final String USER = "root";
 
-    // Common passwords across different XAMPP and MySQL setups
     private static final String[] PASSWORD_CANDIDATES = {"1234", "", "root", "admin"};
     private static volatile String activePassword = null;
 
@@ -37,7 +36,6 @@ public class DbConnection {
             try {
                 return DriverManager.getConnection(buildUrl(DB_NAME), USER, activePassword);
             } catch (SQLException e) {
-                // If the cached password failed, reset and re-detect
                 activePassword = null;
             }
         }
@@ -65,13 +63,9 @@ public class DbConnection {
     }
 
     public static void initializeTables() {
-        // Step 1: Automatically ensure database exists on MySQL server
         ensureDatabaseExists();
 
-        // Step 2: Create all 7 tables and insert default seed records if needed
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-
-            // 1. Users Table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS users ("
                     + "id INT AUTO_INCREMENT PRIMARY KEY, "
                     + "username VARCHAR(50) NOT NULL UNIQUE, "
@@ -83,7 +77,6 @@ public class DbConnection {
                     + "('staff', 'staff123', 'Receptionist'), "
                     + "('doctor', 'doc123', 'Doctor')");
 
-            // 2. Patients Table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS patients ("
                     + "id VARCHAR(20) PRIMARY KEY, "
                     + "name VARCHAR(100) NOT NULL, "
@@ -101,7 +94,6 @@ public class DbConnection {
                     + "('P-103', 'Sophia Martinez', 34, 'Female', 'B+', '+1 555-0321', 'Routine Prenatal Exam', '1208 Meadow Lane'), "
                     + "('P-104', 'David Miller', 62, 'Male', 'AB-', '+1 555-0774', 'Type 2 Diabetes Checkup', '890 Pinecrest Blvd')");
 
-            // 3. Doctors Table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS doctors ("
                     + "id VARCHAR(20) PRIMARY KEY, "
                     + "name VARCHAR(100) NOT NULL, "
@@ -120,7 +112,6 @@ public class DbConnection {
                     + "('DOC-203', 'Dr. Marcus Chen', 'Pediatrics', 'MBBS, DCH', '+1 555-7712', 'marcus.chen@hospital.com', '100', 'Room 102', 'Mon - Fri (08:30 - 12:30)'), "
                     + "('DOC-204', 'Dr. Sarah Mitchell', 'Orthopedics', 'MS, FRCS', '+1 555-9014', 'sarah.mitchell@hospital.com', '160', 'Room 210', 'Wed, Sat (11:00 - 16:00)')");
 
-            // 4. Appointments Table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS appointments ("
                     + "id VARCHAR(20) PRIMARY KEY, "
                     + "patient VARCHAR(150) NOT NULL, "
@@ -138,7 +129,6 @@ public class DbConnection {
                     + "('APT-303', 'Sophia Martinez', 'Dr. Marcus Chen', '2026-10-31', '09:00 AM', 'Pediatrics', 'Scheduled', 'Immunization shot for newborn'), "
                     + "('APT-304', 'David Miller', 'Dr. Elena Rostova', '2026-10-31', '02:30 PM', 'Neurology', 'Cancelled', 'Patient rescheduled due to travel')");
 
-            // 5. Bills Table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bills ("
                     + "id VARCHAR(20) PRIMARY KEY, "
                     + "patient VARCHAR(150) NOT NULL, "
@@ -158,7 +148,6 @@ public class DbConnection {
                     + "('BILL-403', 'Sophia Martinez', 'Dr. Marcus Chen', 100.0, 20.0, 15.0, 135.0, 'Pending', 'Cash', '2026-10-31'), "
                     + "('BILL-404', 'David Miller', 'Dr. Elena Rostova', 180.0, 80.0, 60.0, 320.0, 'Pending', 'Cash', '2026-10-31')");
 
-            // 6. Beds Table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS beds ("
                     + "id VARCHAR(20) PRIMARY KEY, "
                     + "ward_name VARCHAR(100) NOT NULL, "
@@ -179,7 +168,6 @@ public class DbConnection {
                     + "('BED-107', 'Maternity', 'MAT-01', 'Sophia Martinez', 'Occupied', 120.0, '2026-10-27'), "
                     + "('BED-108', 'Pediatric', 'PED-01', '', 'Available', 90.0, '')");
 
-            // 7. Medicines Table
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS medicines ("
                     + "id VARCHAR(20) PRIMARY KEY, "
                     + "name VARCHAR(100) NOT NULL, "

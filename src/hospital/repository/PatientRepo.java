@@ -134,8 +134,7 @@ public class PatientRepo {
                 int nextNum = Integer.parseInt(numPart) + 1;
                 return "P-" + nextNum;
             }
-        } catch (Exception e) {
-            // fallback
+        } catch (SQLException | NumberFormatException ignored) {
         }
         return "P-101";
     }

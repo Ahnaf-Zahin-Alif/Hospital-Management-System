@@ -153,8 +153,7 @@ public class DoctorRepo {
                 int nextNum = Integer.parseInt(numPart) + 1;
                 return "DOC-" + nextNum;
             }
-        } catch (Exception e) {
-            // fallback
+        } catch (SQLException | NumberFormatException ignored) {
         }
         return "DOC-201";
     }

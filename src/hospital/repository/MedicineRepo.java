@@ -125,7 +125,7 @@ public class MedicineRepo {
                 int nextNum = Integer.parseInt(numPart) + 1;
                 return "MED-" + nextNum;
             }
-        } catch (Exception ignored) {
+        } catch (SQLException | NumberFormatException ignored) {
         }
         return "MED-501";
     }

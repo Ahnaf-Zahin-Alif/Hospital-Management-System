@@ -166,8 +166,7 @@ public class AppointmentRepo {
                 int nextNum = Integer.parseInt(numPart) + 1;
                 return "APT-" + nextNum;
             }
-        } catch (Exception e) {
-            // fallback
+        } catch (SQLException | NumberFormatException ignored) {
         }
         return "APT-301";
     }

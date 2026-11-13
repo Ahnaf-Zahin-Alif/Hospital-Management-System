@@ -122,7 +122,7 @@ public class BedRepo {
                 int nextNum = Integer.parseInt(numPart) + 1;
                 return "BED-" + nextNum;
             }
-        } catch (Exception ignored) {
+        } catch (SQLException | NumberFormatException ignored) {
         }
         return "BED-101";
     }

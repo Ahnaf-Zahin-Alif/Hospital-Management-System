@@ -12,7 +12,6 @@ public class App {
         } catch (Exception ignored) {
         }
 
-        // Initialize MySQL database tables if needed
         DbConnection.initializeTables();
 
         SwingUtilities.invokeLater(() -> new LoginFrame().setVisible(true));
