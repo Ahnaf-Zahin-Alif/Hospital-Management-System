@@ -43,8 +43,15 @@ public class PatientPanel extends JPanel {
     private JTable patientTable;
     private TableRowSorter<DefaultTableModel> rowSorter;
     private JLabel countLabel;
+    private final String userRole;
+    private JButton btnDelete;
 
     public PatientPanel() {
+        this("Admin");
+    }
+
+    public PatientPanel(String userRole) {
+        this.userRole = (userRole != null && !userRole.isEmpty()) ? userRole : "Admin";
         setLayout(new BorderLayout(15, 15));
         setBackground(bgLight);
         setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -223,8 +230,13 @@ public class PatientPanel extends JPanel {
 
         JButton btnAdd = createButton("Add Patient", blue, Color.WHITE, 12);
         JButton btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
-        JButton btnDelete = createButton("Delete", new Color(215, 60, 60), Color.WHITE, 12);
+        btnDelete = createButton("Delete", new Color(215, 60, 60), Color.WHITE, 12);
         JButton btnClear = createButton("Clear", new Color(235, 241, 248), navy, 12);
+
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            btnDelete.setEnabled(false);
+            btnDelete.setToolTipText("Only Administrators can delete medical records.");
+        }
 
         btnAdd.addActionListener(e -> addPatient());
         btnUpdate.addActionListener(e -> updatePatient());
@@ -447,6 +459,14 @@ public class PatientPanel extends JPanel {
     }
 
     private void deletePatient() {
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this,
+                    "Access Denied: Only administrators are authorized to delete patient records.",
+                    "Permission Denied",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         int selectedRow = patientTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this,

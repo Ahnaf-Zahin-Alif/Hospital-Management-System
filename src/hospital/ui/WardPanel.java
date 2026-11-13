@@ -49,8 +49,17 @@ public class WardPanel extends JPanel {
     private JTable bedTable;
     private TableRowSorter<DefaultTableModel> rowSorter;
     private JLabel statsLabel;
+    private final String userRole;
+    private JButton btnSave;
+    private JButton btnUpdate;
+    private JButton btnDischarge;
 
     public WardPanel() {
+        this("Admin");
+    }
+
+    public WardPanel(String userRole) {
+        this.userRole = (userRole != null && !userRole.isEmpty()) ? userRole : "Admin";
         setLayout(new BorderLayout(15, 15));
         setBackground(bgLight);
         setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -162,7 +171,9 @@ public class WardPanel extends JPanel {
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
         title.setForeground(navy);
 
-        JLabel subtitle = new JLabel("Manage hospital beds, admissions, and discharges");
+        JLabel subtitle = new JLabel("Doctor".equalsIgnoreCase(userRole)
+                ? "Ward bed occupancy (View-only for clinical staff)"
+                : "Manage hospital beds, admissions, and discharges");
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 11));
         subtitle.setForeground(textMuted);
 
@@ -230,10 +241,20 @@ public class WardPanel extends JPanel {
         actions.setOpaque(false);
         actions.setBorder(new EmptyBorder(10, 0, 0, 0));
 
-        JButton btnSave = createButton("Save Bed", blue, Color.WHITE, 12);
-        JButton btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
-        JButton btnDischarge = createButton("Discharge", new Color(215, 60, 60), Color.WHITE, 12);
+        btnSave = createButton("Save Bed", blue, Color.WHITE, 12);
+        btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
+        btnDischarge = createButton("Discharge", new Color(215, 60, 60), Color.WHITE, 12);
         JButton btnClear = createButton("Clear", new Color(235, 241, 248), navy, 12);
+
+        if ("Doctor".equalsIgnoreCase(userRole)) {
+            btnSave.setEnabled(false);
+            btnUpdate.setEnabled(false);
+            btnDischarge.setEnabled(false);
+            String tip = "Bed admissions and discharges are managed by Front Desk Staff.";
+            btnSave.setToolTipText(tip);
+            btnUpdate.setToolTipText(tip);
+            btnDischarge.setToolTipText(tip);
+        }
 
         btnSave.addActionListener(e -> addBed());
         btnUpdate.addActionListener(e -> updateBed());
@@ -411,6 +432,10 @@ public class WardPanel extends JPanel {
     }
 
     private void addBed() {
+        if ("Doctor".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Bed allocations are managed by Front Desk Staff.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         Bed bed = parseBedFromForm();
         if (bed == null) return;
 
@@ -434,6 +459,10 @@ public class WardPanel extends JPanel {
     }
 
     private void updateBed() {
+        if ("Doctor".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Bed allocations are managed by Front Desk Staff.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int selectedRow = bedTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this,
@@ -469,6 +498,10 @@ public class WardPanel extends JPanel {
     }
 
     private void dischargePatient() {
+        if ("Doctor".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Patient discharges are managed by Front Desk Staff.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int selectedRow = bedTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this,

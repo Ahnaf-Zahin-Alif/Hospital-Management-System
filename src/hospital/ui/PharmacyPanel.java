@@ -48,8 +48,19 @@ public class PharmacyPanel extends JPanel {
     private JTable medicineTable;
     private TableRowSorter<DefaultTableModel> rowSorter;
     private JLabel statsLabel;
+    private final String userRole;
+    private JButton btnAdd;
+    private JButton btnUpdate;
+    private JButton btnAdjustStock;
+    private JButton btnDelete;
+    private JButton btnQuickDispense;
 
     public PharmacyPanel() {
+        this("Admin");
+    }
+
+    public PharmacyPanel(String userRole) {
+        this.userRole = (userRole != null && !userRole.isEmpty()) ? userRole : "Admin";
         setLayout(new BorderLayout(15, 15));
         setBackground(bgLight);
         setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -186,7 +197,11 @@ public class PharmacyPanel extends JPanel {
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
         title.setForeground(navy);
 
-        JLabel subtitle = new JLabel("Add, track stock, and manage hospital pharmacy");
+        JLabel subtitle = new JLabel("Doctor".equalsIgnoreCase(userRole)
+                ? "Pharmacy drug inventory (View-only for prescribing)"
+                : ("Admin".equalsIgnoreCase(userRole)
+                        ? "Add, track stock, and manage hospital pharmacy"
+                        : "Pharmacy inventory & patient prescription dispensing"));
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 11));
         subtitle.setForeground(textMuted);
 
@@ -255,12 +270,39 @@ public class PharmacyPanel extends JPanel {
         actions.setOpaque(false);
         actions.setBorder(new EmptyBorder(10, 0, 0, 0));
 
-        JButton btnAdd = createButton("Add Medicine", blue, Color.WHITE, 12);
-        JButton btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
-        JButton btnAdjustStock = createButton("\u00B1 Adjust Stock", new Color(100, 70, 170), Color.WHITE, 12);
-        JButton btnDelete = createButton("Delete", new Color(210, 50, 50), Color.WHITE, 12);
+        btnAdd = createButton("Add Medicine", blue, Color.WHITE, 12);
+        btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
+        btnAdjustStock = createButton("\u00B1 Adjust Stock", new Color(100, 70, 170), Color.WHITE, 12);
+        btnDelete = createButton("Delete", new Color(210, 50, 50), Color.WHITE, 12);
         JButton btnClear = createButton("Clear Form", new Color(235, 241, 248), navy, 12);
-        JButton btnQuickDispense = createButton("Dispense (-1)", new Color(220, 120, 30), Color.WHITE, 12);
+        btnQuickDispense = createButton("Dispense (-1)", new Color(220, 120, 30), Color.WHITE, 12);
+
+        boolean isAdmin = "Admin".equalsIgnoreCase(userRole);
+        boolean isDoctor = "Doctor".equalsIgnoreCase(userRole);
+
+        if (isDoctor) {
+            btnAdd.setEnabled(false);
+            btnUpdate.setEnabled(false);
+            btnAdjustStock.setEnabled(false);
+            btnDelete.setEnabled(false);
+            btnQuickDispense.setEnabled(false);
+            String tip = "Medication dispensing and stock adjustments are managed by Pharmacy/Admin Staff.";
+            btnAdd.setToolTipText(tip);
+            btnUpdate.setToolTipText(tip);
+            btnAdjustStock.setToolTipText(tip);
+            btnDelete.setToolTipText(tip);
+            btnQuickDispense.setToolTipText(tip);
+        } else if (!isAdmin) {
+            btnAdd.setEnabled(false);
+            btnUpdate.setEnabled(false);
+            btnAdjustStock.setEnabled(false);
+            btnDelete.setEnabled(false);
+            String tip = "Wholesale pharmacy catalog management is restricted to Administrators.";
+            btnAdd.setToolTipText(tip);
+            btnUpdate.setToolTipText(tip);
+            btnAdjustStock.setToolTipText(tip);
+            btnDelete.setToolTipText(tip);
+        }
 
         btnAdd.addActionListener(e -> addMedicine());
         btnUpdate.addActionListener(e -> updateMedicine());
@@ -435,6 +477,10 @@ public class PharmacyPanel extends JPanel {
     }
 
     private void addMedicine() {
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Only administrators can register new pharmaceutical drugs.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         Medicine m = parseMedicineFromForm();
         if (m == null) return;
 
@@ -453,6 +499,10 @@ public class PharmacyPanel extends JPanel {
     }
 
     private void updateMedicine() {
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Only administrators can update drug catalog records.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int selected = medicineTable.getSelectedRow();
         if (selected == -1) {
             JOptionPane.showMessageDialog(this, "Please select a medicine from the table to update.", "Selection Required", JOptionPane.WARNING_MESSAGE);
@@ -473,6 +523,10 @@ public class PharmacyPanel extends JPanel {
     }
 
     private void deleteMedicine() {
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Only administrators can remove medicine records.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int selected = medicineTable.getSelectedRow();
         if (selected == -1) {
             JOptionPane.showMessageDialog(this, "Please select a medicine to delete.", "Selection Required", JOptionPane.WARNING_MESSAGE);
@@ -504,6 +558,10 @@ public class PharmacyPanel extends JPanel {
     }
 
     private void showAdjustStockDialog() {
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Only administrators can adjust wholesale inventory.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         String id = txtId.getText().trim();
         String name = txtName.getText().trim();
 
@@ -540,6 +598,10 @@ public class PharmacyPanel extends JPanel {
     }
 
     private void quickDispense() {
+        if ("Doctor".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Prescription dispensing is performed by Pharmacy or Front Desk Staff.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         String id = txtId.getText().trim();
         if (id.isEmpty() || medicineServices.getMedicineById(id) == null) {
             JOptionPane.showMessageDialog(this, "Please select a medicine first.", "Select Medicine", JOptionPane.WARNING_MESSAGE);

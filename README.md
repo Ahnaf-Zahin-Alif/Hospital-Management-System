@@ -204,14 +204,14 @@ Database connection settings are configured in [`src/hospital/utils/DbConnection
 | :--- | :--- | :--- |
 | `HOST` | MySQL Server host | `localhost` |
 | `PORT` | MySQL Server port | `3306` |
-| `DB_NAME` | Target database name | `hopital_db` |
+| `DB_NAME` | Target database name | `hospital_db` |
 | `USER` | MySQL user account | `root` |
 | `PASSWORD` | MySQL password | `1234` |
 
 #### Database Schema Setup
 Ensure your MySQL server is running. Create the database via phpMyAdmin or MySQL CLI:
 ```sql
-CREATE DATABASE IF NOT EXISTS hopital_db;
+CREATE DATABASE IF NOT EXISTS hospital_db;
 ```
 You can import [`schema.sql`](schema.sql) directly, or launch the application—`DbConnection.initializeTables()` will automatically create and seed all tables (`users`, `patients`, `doctors`, `appointments`) on startup.
 
@@ -239,15 +239,27 @@ java -cp "bin;lib/*" hospital.App
 
 ## Usage
 
-### Default Login Accounts
+### Default Login Accounts & Role-Based Access Control (RBAC)
 
 The database comes pre-seeded with three default accounts for testing:
 
-| Role | Username | Password | Access Scope |
+| Role | Username | Password | Access Scope & Segment Permissions |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin` | `admin123` | Full access across all system modules |
-| **Receptionist** | `staff` | `staff123` | Patient check-in and appointment booking |
-| **Doctor** | `doctor` | `doc123` | Medical review and clinical schedules |
+| **Admin** | `admin` | `admin123` | **Full Administrative Access**: Complete CRUD rights across all 6 segments, doctor hiring/fee editing, wholesale pharmacy restocking, and patient deletion. |
+| **Doctor** | `doctor` | `doc123` | **Clinical Operations**: Lands directly on appointment consultation queue. Can view patients & update diagnoses, review inpatient ward occupancies, and check medicine catalog. Financial billing and doctor staff management are hidden; destructive delete is blocked. |
+| **Receptionist** | `staff` | `staff123` | **Front Desk & Cashier**: Patient check-in & registration, appointment booking & rescheduling, billing invoice creation & receipt printing, inpatient bed allocation & discharge fee calculation, and medication dispensing. Destructive deletions and doctor staff modifications are blocked. |
+
+#### Role-Based Privilege Matrix
+
+| Module / Operation | 👑 Admin | 🩺 Doctor | 📋 Receptionist / Staff |
+| :--- | :---: | :---: | :---: |
+| **Patients** (Register & Update) | ✅ Full | ✅ Update Diagnosis | ✅ Register & Update Demographics |
+| **Patients** (Delete Record) | ✅ Allowed | ❌ Blocked | ❌ Blocked |
+| **Doctor Directory** | ✅ Full CRUD | 🔍 View-only directory | 🔍 View-only directory (check schedules) |
+| **Appointments** | ✅ Full CRUD | ✅ View queue, add notes, complete visit | ✅ Book, reschedule, cancel |
+| **Billing & Cashier** | ✅ Full CRUD | ❌ **Hidden from navigation** | ✅ Create invoices & print receipts |
+| **Wards & Beds** | ✅ Full CRUD | 🔍 View bed occupancy | ✅ Allocate beds & discharge patients |
+| **Pharmacy Inventory** | ✅ Full CRUD & restock | 🔍 View stock availability | ✅ Dispense medication (`-1`) |
 
 ### Workflows
 

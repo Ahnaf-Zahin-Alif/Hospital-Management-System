@@ -47,8 +47,17 @@ public class DoctorPanel extends JPanel {
     private JTable doctorTable;
     private TableRowSorter<DefaultTableModel> rowSorter;
     private JLabel countLabel;
+    private final String userRole;
+    private JButton btnAdd;
+    private JButton btnUpdate;
+    private JButton btnDelete;
 
     public DoctorPanel() {
+        this("Admin");
+    }
+
+    public DoctorPanel(String userRole) {
+        this.userRole = (userRole != null && !userRole.isEmpty()) ? userRole : "Admin";
         setLayout(new BorderLayout(15, 15));
         setBackground(bgLight);
         setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -163,7 +172,9 @@ public class DoctorPanel extends JPanel {
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
         title.setForeground(navy);
 
-        JLabel subtitle = new JLabel("Register or modify medical practitioners");
+        JLabel subtitle = new JLabel("Admin".equalsIgnoreCase(userRole)
+                ? "Register or modify medical practitioners"
+                : "Staff roster (View-only for non-administrators)");
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 11));
         subtitle.setForeground(textMuted);
 
@@ -243,10 +254,20 @@ public class DoctorPanel extends JPanel {
         actions.setOpaque(false);
         actions.setBorder(new EmptyBorder(10, 0, 0, 0));
 
-        JButton btnAdd = createButton("Add Doctor", blue, Color.WHITE, 12);
-        JButton btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
-        JButton btnDelete = createButton("Delete", new Color(215, 60, 60), Color.WHITE, 12);
+        btnAdd = createButton("Add Doctor", blue, Color.WHITE, 12);
+        btnUpdate = createButton("Update", new Color(40, 150, 90), Color.WHITE, 12);
+        btnDelete = createButton("Delete", new Color(215, 60, 60), Color.WHITE, 12);
         JButton btnClear = createButton("Clear", new Color(235, 241, 248), navy, 12);
+
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            btnAdd.setEnabled(false);
+            btnUpdate.setEnabled(false);
+            btnDelete.setEnabled(false);
+            String tip = "Only Administrators can modify staff records.";
+            btnAdd.setToolTipText(tip);
+            btnUpdate.setToolTipText(tip);
+            btnDelete.setToolTipText(tip);
+        }
 
         btnAdd.addActionListener(e -> addDoctor());
         btnUpdate.addActionListener(e -> updateDoctor());
@@ -404,6 +425,10 @@ public class DoctorPanel extends JPanel {
     }
 
     private void addDoctor() {
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Only administrators can register doctors.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         Doctor doctor = parseDoctorFromForm();
         if (doctor == null) {
             return;
@@ -430,6 +455,10 @@ public class DoctorPanel extends JPanel {
     }
 
     private void updateDoctor() {
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Only administrators can update doctor records.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int selectedRow = doctorTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this,
@@ -467,6 +496,10 @@ public class DoctorPanel extends JPanel {
     }
 
     private void deleteDoctor() {
+        if (!"Admin".equalsIgnoreCase(userRole)) {
+            JOptionPane.showMessageDialog(this, "Access Denied: Only administrators can delete doctor records.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int selectedRow = doctorTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this,

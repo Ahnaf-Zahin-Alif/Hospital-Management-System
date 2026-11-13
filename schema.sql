@@ -1,6 +1,10 @@
-CREATE DATABASE IF NOT EXISTS hopital_db;
-USE hopital_db;
+-- MediCare Hospital Management System Database Schema & Seed Data
+-- Target Database: hospital_db
 
+CREATE DATABASE IF NOT EXISTS hospital_db;
+USE hospital_db;
+
+-- 1. Users Table (Authentication & RBAC)
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -13,6 +17,7 @@ INSERT IGNORE INTO users (username, password, role) VALUES
 ('staff', 'staff123', 'Receptionist'),
 ('doctor', 'doc123', 'Doctor');
 
+-- 2. Patients Table
 CREATE TABLE IF NOT EXISTS patients (
     id VARCHAR(20) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -31,6 +36,7 @@ INSERT IGNORE INTO patients (id, name, age, gender, blood_group, phone, diagnosi
 ('P-103', 'Sophia Martinez', 34, 'Female', 'B+', '+1 555-0321', 'Routine Prenatal Exam', '1208 Meadow Lane'),
 ('P-104', 'David Miller', 62, 'Male', 'AB-', '+1 555-0774', 'Type 2 Diabetes Checkup', '890 Pinecrest Blvd');
 
+-- 3. Doctors Table
 CREATE TABLE IF NOT EXISTS doctors (
     id VARCHAR(20) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -50,6 +56,7 @@ INSERT IGNORE INTO doctors (id, name, specialty, qualification, phone, email, fe
 ('DOC-203', 'Dr. Marcus Chen', 'Pediatrics', 'MBBS, DCH', '+1 555-7712', 'marcus.chen@hospital.com', '100', 'Room 102', 'Mon - Fri (08:30 - 12:30)'),
 ('DOC-204', 'Dr. Sarah Mitchell', 'Orthopedics', 'MS, FRCS', '+1 555-9014', 'sarah.mitchell@hospital.com', '160', 'Room 210', 'Wed, Sat (11:00 - 16:00)');
 
+-- 4. Appointments Table
 CREATE TABLE IF NOT EXISTS appointments (
     id VARCHAR(20) PRIMARY KEY,
     patient VARCHAR(150) NOT NULL,
@@ -68,6 +75,7 @@ INSERT IGNORE INTO appointments (id, patient, doctor, date, time, department, st
 ('APT-303', 'Sophia Martinez', 'Dr. Marcus Chen', '2026-10-31', '09:00 AM', 'Pediatrics', 'Scheduled', 'Immunization shot for newborn'),
 ('APT-304', 'David Miller', 'Dr. Elena Rostova', '2026-10-31', '02:30 PM', 'Neurology', 'Cancelled', 'Patient rescheduled due to travel');
 
+-- 5. Bills Table
 CREATE TABLE IF NOT EXISTS bills (
     id VARCHAR(20) PRIMARY KEY,
     patient VARCHAR(150) NOT NULL,
@@ -88,6 +96,7 @@ INSERT IGNORE INTO bills (id, patient, doctor, consultation_fee, treatment_fee, 
 ('BILL-403', 'Sophia Martinez', 'Dr. Marcus Chen', 100.0, 20.0, 15.0, 135.0, 'Pending', 'Cash', '2026-10-31'),
 ('BILL-404', 'David Miller', 'Dr. Elena Rostova', 180.0, 80.0, 60.0, 320.0, 'Pending', 'Cash', '2026-10-31');
 
+-- 6. Beds Table
 CREATE TABLE IF NOT EXISTS beds (
     id VARCHAR(20) PRIMARY KEY,
     ward_name VARCHAR(100) NOT NULL,
@@ -109,6 +118,7 @@ INSERT IGNORE INTO beds (id, ward_name, bed_number, patient, status, daily_charg
 ('BED-107', 'Maternity', 'MAT-01', 'Sophia Martinez', 'Occupied', 120.0, '2026-10-27'),
 ('BED-108', 'Pediatric', 'PED-01', '', 'Available', 90.0, '');
 
+-- 7. Medicines Table
 CREATE TABLE IF NOT EXISTS medicines (
     id VARCHAR(20) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -128,20 +138,3 @@ INSERT IGNORE INTO medicines (id, name, category, stock_qty, unit_price, expiry_
 ('MED-505', 'Ibuprofen 400mg', 'Anti-inflammatory', 8, 7.20, '2026-12-31', 'Bayer Health'),
 ('MED-506', 'Omeprazole 20mg', 'Gastrointestinal', 210, 8.50, '2027-09-18', 'AstraZeneca'),
 ('MED-507', 'Cetirizine 10mg', 'Antihistamine', 5, 5.00, '2026-11-25', 'Sanofi');
-
-CREATE DATABASE IF NOT EXISTS hospital_db;
-USE hospital_db;
-CREATE TABLE IF NOT EXISTS users LIKE hopital_db.users;
-INSERT IGNORE INTO users SELECT * FROM hopital_db.users;
-CREATE TABLE IF NOT EXISTS patients LIKE hopital_db.patients;
-INSERT IGNORE INTO patients SELECT * FROM hopital_db.patients;
-CREATE TABLE IF NOT EXISTS doctors LIKE hopital_db.doctors;
-INSERT IGNORE INTO doctors SELECT * FROM hopital_db.doctors;
-CREATE TABLE IF NOT EXISTS appointments LIKE hopital_db.appointments;
-INSERT IGNORE INTO appointments SELECT * FROM hopital_db.appointments;
-CREATE TABLE IF NOT EXISTS bills LIKE hopital_db.bills;
-INSERT IGNORE INTO bills SELECT * FROM hopital_db.bills;
-CREATE TABLE IF NOT EXISTS beds LIKE hopital_db.beds;
-INSERT IGNORE INTO beds SELECT * FROM hopital_db.beds;
-CREATE TABLE IF NOT EXISTS medicines LIKE hopital_db.medicines;
-INSERT IGNORE INTO medicines SELECT * FROM hopital_db.medicines;

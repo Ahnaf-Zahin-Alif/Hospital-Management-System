@@ -64,18 +64,22 @@ public class MainFrame extends JFrame {
         contentCards.setBackground(contentBg);
         contentCards.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        contentCards.add(new PatientPanel(), "PATIENTS");
-        contentCards.add(new DoctorPanel(), "DOCTORS");
+        contentCards.add(new PatientPanel(currentRole), "PATIENTS");
+        contentCards.add(new DoctorPanel(currentRole), "DOCTORS");
         contentCards.add(new AppointmentPanel(), "APPOINTMENTS");
         contentCards.add(new BillingPanel(), "BILLING");
-        contentCards.add(new WardPanel(), "WARDS");
-        contentCards.add(new PharmacyPanel(), "PHARMACY");
+        contentCards.add(new WardPanel(currentRole), "WARDS");
+        contentCards.add(new PharmacyPanel(currentRole), "PHARMACY");
 
         mainContainer.add(contentCards, BorderLayout.CENTER);
         root.add(mainContainer, BorderLayout.CENTER);
         setContentPane(root);
 
-        selectNavigation(btnPatients, "PATIENTS", "Patient Management", "Register, manage, and view patient health records");
+        if ("Doctor".equalsIgnoreCase(currentRole)) {
+            selectNavigation(btnAppointments, "APPOINTMENTS", "Clinical Appointments", "Review patient consultation queue and clinical schedules");
+        } else {
+            selectNavigation(btnPatients, "PATIENTS", "Patient Management", "Register, manage, and view patient health records");
+        }
     }
 
     private JPanel createSidebar() {
@@ -119,36 +123,37 @@ public class MainFrame extends JFrame {
         navMenu.setLayout(new BoxLayout(navMenu, BoxLayout.Y_AXIS));
         navMenu.setBorder(new EmptyBorder(15, 12, 15, 12));
 
-        JLabel navLabel = new JLabel("MENU");
+        JLabel navLabel = new JLabel("MENU (" + currentRole.toUpperCase() + ")");
         navLabel.setFont(new Font("SansSerif", Font.BOLD, 10));
         navLabel.setForeground(new Color(110, 140, 175));
         navLabel.setBorder(new EmptyBorder(0, 10, 8, 0));
         navMenu.add(navLabel);
 
-        btnPatients = addNavEntry(navMenu, "\uD83D\uDC65  Patients", "PATIENTS", "Patient Management", "Register, manage, and view patient health records");
-        btnDoctors = addNavEntry(navMenu, "\uD83E\uDE7A  Doctors", "DOCTORS", "Doctor Directory", "Manage hospital staff, medical specialists, and departments");
-        btnAppointments = addNavEntry(navMenu, "\uD83D\uDCC5  Appointments", "APPOINTMENTS", "Appointment Scheduling", "Schedule and manage doctor appointments and bookings");
-        btnBilling = addNavEntry(navMenu, "\uD83D\uDCB3  Billing & Invoices", "BILLING", "Billing & Invoicing", "Manage patient bills, consultations, and payment receipts");
-        btnWards = addNavEntry(navMenu, "\uD83D\uDECF\uFE0F  Wards & Beds", "WARDS", "Ward & Bed Management", "Track hospital bed occupancy, admissions, and discharge");
-        btnPharmacy = addNavEntry(navMenu, "\uD83D\uDC8A  Pharmacy Stock", "PHARMACY", "Pharmacy & Inventory", "Manage medicine stock, pricing, and catalog");
+        boolean isAdmin = "Admin".equalsIgnoreCase(currentRole);
+        boolean isDoctor = "Doctor".equalsIgnoreCase(currentRole);
+
+        if (isDoctor) {
+            btnAppointments = addNavEntry(navMenu, "\uD83D\uDCC5  Appointments", "APPOINTMENTS", "Appointment Queue", "Review patient consultation schedules and clinical records");
+            btnPatients = addNavEntry(navMenu, "\uD83D\uDC65  Patients", "PATIENTS", "Patient Records", "View and update patient clinical history and diagnoses");
+            btnWards = addNavEntry(navMenu, "\uD83D\uDECF\uFE0F  Wards & Beds", "WARDS", "Inpatient Wards", "Monitor ward bed occupancy and admitted patient status");
+            btnPharmacy = addNavEntry(navMenu, "\uD83D\uDC8A  Pharmacy Stock", "PHARMACY", "Pharmacy Catalog", "Check medication stock levels and therapeutic availability");
+        } else if (!isAdmin) {
+            btnPatients = addNavEntry(navMenu, "\uD83D\uDC65  Patients", "PATIENTS", "Patient Registration", "Register, manage, and check-in patient records");
+            btnAppointments = addNavEntry(navMenu, "\uD83D\uDCC5  Appointments", "APPOINTMENTS", "Appointment Booking", "Schedule, reschedule, or cancel patient appointments");
+            btnBilling = addNavEntry(navMenu, "\uD83D\uDCB3  Billing & Invoices", "BILLING", "Billing & Cashier", "Process patient consultations, generate invoices, and print receipts");
+            btnWards = addNavEntry(navMenu, "\uD83D\uDECF\uFE0F  Wards & Beds", "WARDS", "Admissions & Beds", "Allocate hospital beds and process patient discharge charges");
+            btnPharmacy = addNavEntry(navMenu, "\uD83D\uDC8A  Pharmacy Stock", "PHARMACY", "Pharmacy Dispense", "Dispense prescribed medications and review current inventory");
+            btnDoctors = addNavEntry(navMenu, "\uD83E\uDE7A  Doctors", "DOCTORS", "Doctor Directory", "Check visiting hours, room numbers, and physician specialties");
+        } else {
+            btnPatients = addNavEntry(navMenu, "\uD83D\uDC65  Patients", "PATIENTS", "Patient Management", "Register, manage, and view patient health records");
+            btnDoctors = addNavEntry(navMenu, "\uD83E\uDE7A  Doctors", "DOCTORS", "Doctor Directory", "Manage hospital staff, medical specialists, and departments");
+            btnAppointments = addNavEntry(navMenu, "\uD83D\uDCC5  Appointments", "APPOINTMENTS", "Appointment Scheduling", "Schedule and manage doctor appointments and bookings");
+            btnBilling = addNavEntry(navMenu, "\uD83D\uDCB3  Billing & Invoices", "BILLING", "Billing & Invoicing", "Manage patient bills, consultations, and payment receipts");
+            btnWards = addNavEntry(navMenu, "\uD83D\uDECF\uFE0F  Wards & Beds", "WARDS", "Ward & Bed Management", "Track hospital bed occupancy, admissions, and discharge");
+            btnPharmacy = addNavEntry(navMenu, "\uD83D\uDC8A  Pharmacy Stock", "PHARMACY", "Pharmacy & Inventory", "Manage medicine stock, pricing, and catalog");
+        }
 
         sidebar.add(navMenu, BorderLayout.CENTER);
-
-        JPanel footer = new JPanel(new BorderLayout());
-        footer.setOpaque(false);
-        footer.setBorder(new EmptyBorder(15, 20, 18, 20));
-
-        JLabel statusLabel = new JLabel("\u25CF System Online");
-        statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        statusLabel.setForeground(new Color(90, 205, 135));
-
-        JLabel versionLabel = new JLabel("v1.0.0");
-        versionLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        versionLabel.setForeground(new Color(125, 155, 185));
-
-        footer.add(statusLabel, BorderLayout.WEST);
-        footer.add(versionLabel, BorderLayout.EAST);
-        sidebar.add(footer, BorderLayout.SOUTH);
 
         return sidebar;
     }
@@ -241,18 +246,40 @@ public class MainFrame extends JFrame {
         rightArea.setOpaque(false);
 
         JPanel userBadge = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        userBadge.setBackground(new Color(238, 244, 252));
+        Color badgeBg;
+        Color badgeBorder;
+        Color badgeFg;
+        String roleIcon;
+
+        if ("Doctor".equalsIgnoreCase(currentRole)) {
+            badgeBg = new Color(236, 253, 245);
+            badgeBorder = new Color(167, 243, 208);
+            badgeFg = new Color(4, 120, 87);
+            roleIcon = "\uD83E\uDE7A";
+        } else if ("Admin".equalsIgnoreCase(currentRole)) {
+            badgeBg = new Color(243, 232, 255);
+            badgeBorder = new Color(216, 180, 254);
+            badgeFg = new Color(109, 40, 217);
+            roleIcon = "\uD83D\uDC51";
+        } else {
+            badgeBg = new Color(254, 243, 199);
+            badgeBorder = new Color(253, 230, 138);
+            badgeFg = new Color(180, 83, 9);
+            roleIcon = "\uD83D\uDCCB";
+        }
+
+        userBadge.setBackground(badgeBg);
         userBadge.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(210, 225, 240), 1),
+                BorderFactory.createLineBorder(badgeBorder, 1),
                 new EmptyBorder(3, 10, 3, 12)
         ));
 
-        JLabel userIcon = new JLabel("\uD83D\uDC64");
+        JLabel userIcon = new JLabel(roleIcon);
         userIcon.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
         JLabel userInfo = new JLabel(currentUser + " (" + currentRole + ")");
         userInfo.setFont(new Font("SansSerif", Font.BOLD, 12));
-        userInfo.setForeground(navy);
+        userInfo.setForeground(badgeFg);
 
         userBadge.add(userIcon);
         userBadge.add(userInfo);
