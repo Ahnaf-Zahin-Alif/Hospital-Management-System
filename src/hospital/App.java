@@ -1,18 +1,12 @@
 package hospital;
 
 import hospital.ui.LoginFrame;
-import hospital.utils.DbConnection;
+import hospital.utils.DatabaseSetup;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 public class App {
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
-        }
-
-        DbConnection.initializeTables();
+        DatabaseSetup.initialize();
 
         SwingUtilities.invokeLater(() -> new LoginFrame().setVisible(true));
     }

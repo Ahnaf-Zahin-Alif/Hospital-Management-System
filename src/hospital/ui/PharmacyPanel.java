@@ -694,30 +694,39 @@ public class PharmacyPanel extends JPanel {
     }
 
     private JButton createButton(String text, Color bg, Color fg, int fontSize) {
-        JButton btn = new JButton(text);
+        Color hover = bg.equals(blue) ? blueHover : bg.darker();
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                if (!isEnabled()) {
+                    g2.setColor(new Color(225, 230, 238));
+                } else if (getModel().isPressed()) {
+                    g2.setColor(hover.darker());
+                } else if (getModel().isRollover()) {
+                    g2.setColor(hover);
+                } else {
+                    g2.setColor(bg);
+                }
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+
+                if (bg.getRed() > 220 && bg.getGreen() > 220 && bg.getBlue() > 220) {
+                    g2.setColor(new Color(205, 218, 230));
+                    g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
+                }
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         btn.setFont(new Font("SansSerif", Font.BOLD, fontSize));
-        btn.setBackground(bg);
         btn.setForeground(fg);
+        btn.setContentAreaFilled(false);
         btn.setFocusPainted(false);
-        btn.setOpaque(true);
+        btn.setBorderPainted(false);
+        btn.setOpaque(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(bg.darker(), 1),
-                new EmptyBorder(8, 14, 8, 14)
-        ));
-
-        btn.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                btn.setBackground(bg.equals(blue) ? blueHover : bg.darker());
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                btn.setBackground(bg);
-            }
-        });
-
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
         return btn;
     }
 }

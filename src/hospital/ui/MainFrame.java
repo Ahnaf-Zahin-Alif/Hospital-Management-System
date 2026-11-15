@@ -133,24 +133,24 @@ public class MainFrame extends JFrame {
         boolean isDoctor = "Doctor".equalsIgnoreCase(currentRole);
 
         if (isDoctor) {
-            btnAppointments = addNavEntry(navMenu, "\uD83D\uDCC5  Appointments", "APPOINTMENTS", "Appointment Queue", "Review patient consultation schedules and clinical records");
-            btnPatients = addNavEntry(navMenu, "\uD83D\uDC65  Patients", "PATIENTS", "Patient Records", "View and update patient clinical history and diagnoses");
-            btnWards = addNavEntry(navMenu, "\uD83D\uDECF\uFE0F  Wards & Beds", "WARDS", "Inpatient Wards", "Monitor ward bed occupancy and admitted patient status");
-            btnPharmacy = addNavEntry(navMenu, "\uD83D\uDC8A  Pharmacy Stock", "PHARMACY", "Pharmacy Catalog", "Check medication stock levels and therapeutic availability");
+            btnAppointments = addNavEntry(navMenu, "Appointments", "APPOINTMENTS", "Appointment Queue", "Review patient consultation schedules and clinical records");
+            btnPatients = addNavEntry(navMenu, "Patients", "PATIENTS", "Patient Records", "View and update patient clinical history and diagnoses");
+            btnWards = addNavEntry(navMenu, "Wards & Beds", "WARDS", "Inpatient Wards", "Monitor ward bed occupancy and admitted patient status");
+            btnPharmacy = addNavEntry(navMenu, "Pharmacy Stock", "PHARMACY", "Pharmacy Catalog", "Check medication stock levels and therapeutic availability");
         } else if (!isAdmin) {
-            btnPatients = addNavEntry(navMenu, "\uD83D\uDC65  Patients", "PATIENTS", "Patient Registration", "Register, manage, and check-in patient records");
-            btnAppointments = addNavEntry(navMenu, "\uD83D\uDCC5  Appointments", "APPOINTMENTS", "Appointment Booking", "Schedule, reschedule, or cancel patient appointments");
-            btnBilling = addNavEntry(navMenu, "\uD83D\uDCB3  Billing & Invoices", "BILLING", "Billing & Cashier", "Process patient consultations, generate invoices, and print receipts");
-            btnWards = addNavEntry(navMenu, "\uD83D\uDECF\uFE0F  Wards & Beds", "WARDS", "Admissions & Beds", "Allocate hospital beds and process patient discharge charges");
-            btnPharmacy = addNavEntry(navMenu, "\uD83D\uDC8A  Pharmacy Stock", "PHARMACY", "Pharmacy Dispense", "Dispense prescribed medications and review current inventory");
-            btnDoctors = addNavEntry(navMenu, "\uD83E\uDE7A  Doctors", "DOCTORS", "Doctor Directory", "Check visiting hours, room numbers, and physician specialties");
+            btnPatients = addNavEntry(navMenu, "Patients", "PATIENTS", "Patient Registration", "Register, manage, and check-in patient records");
+            btnAppointments = addNavEntry(navMenu, "Appointments", "APPOINTMENTS", "Appointment Booking", "Schedule, reschedule, or cancel patient appointments");
+            btnBilling = addNavEntry(navMenu, "Billing & Invoices", "BILLING", "Billing & Cashier", "Process patient consultations, generate invoices, and print receipts");
+            btnWards = addNavEntry(navMenu, "Wards & Beds", "WARDS", "Admissions & Beds", "Allocate hospital beds and process patient discharge charges");
+            btnPharmacy = addNavEntry(navMenu, "Pharmacy Stock", "PHARMACY", "Pharmacy Dispense", "Dispense prescribed medications and review current inventory");
+            btnDoctors = addNavEntry(navMenu, "Doctors", "DOCTORS", "Doctor Directory", "Check visiting hours, room numbers, and physician specialties");
         } else {
-            btnPatients = addNavEntry(navMenu, "\uD83D\uDC65  Patients", "PATIENTS", "Patient Management", "Register, manage, and view patient health records");
-            btnDoctors = addNavEntry(navMenu, "\uD83E\uDE7A  Doctors", "DOCTORS", "Doctor Directory", "Manage hospital staff, medical specialists, and departments");
-            btnAppointments = addNavEntry(navMenu, "\uD83D\uDCC5  Appointments", "APPOINTMENTS", "Appointment Scheduling", "Schedule and manage doctor appointments and bookings");
-            btnBilling = addNavEntry(navMenu, "\uD83D\uDCB3  Billing & Invoices", "BILLING", "Billing & Invoicing", "Manage patient bills, consultations, and payment receipts");
-            btnWards = addNavEntry(navMenu, "\uD83D\uDECF\uFE0F  Wards & Beds", "WARDS", "Ward & Bed Management", "Track hospital bed occupancy, admissions, and discharge");
-            btnPharmacy = addNavEntry(navMenu, "\uD83D\uDC8A  Pharmacy Stock", "PHARMACY", "Pharmacy & Inventory", "Manage medicine stock, pricing, and catalog");
+            btnPatients = addNavEntry(navMenu, "Patients", "PATIENTS", "Patient Management", "Register, manage, and view patient health records");
+            btnDoctors = addNavEntry(navMenu, "Doctors", "DOCTORS", "Doctor Directory", "Manage hospital staff, medical specialists, and departments");
+            btnAppointments = addNavEntry(navMenu, "Appointments", "APPOINTMENTS", "Appointment Scheduling", "Schedule and manage doctor appointments and bookings");
+            btnBilling = addNavEntry(navMenu, "Billing & Invoices", "BILLING", "Billing & Invoicing", "Manage patient bills, consultations, and payment receipts");
+            btnWards = addNavEntry(navMenu, "Wards & Beds", "WARDS", "Ward & Bed Management", "Track hospital bed occupancy, admissions, and discharge");
+            btnPharmacy = addNavEntry(navMenu, "Pharmacy Stock", "PHARMACY", "Pharmacy & Inventory", "Manage medicine stock, pricing, and catalog");
         }
 
         sidebar.add(navMenu, BorderLayout.CENTER);
@@ -170,7 +170,7 @@ public class MainFrame extends JFrame {
         btn.setBorderPainted(false);
         btn.setOpaque(true);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(new EmptyBorder(10, 16, 10, 16));
+        btn.setBorder(new EmptyBorder(10, 18, 10, 18));
 
         btn.addMouseListener(new MouseAdapter() {
             @Override
@@ -255,17 +255,17 @@ public class MainFrame extends JFrame {
             badgeBg = new Color(236, 253, 245);
             badgeBorder = new Color(167, 243, 208);
             badgeFg = new Color(4, 120, 87);
-            roleIcon = "\uD83E\uDE7A";
+            roleIcon = "●";
         } else if ("Admin".equalsIgnoreCase(currentRole)) {
             badgeBg = new Color(243, 232, 255);
             badgeBorder = new Color(216, 180, 254);
             badgeFg = new Color(109, 40, 217);
-            roleIcon = "\uD83D\uDC51";
+            roleIcon = "●";
         } else {
             badgeBg = new Color(254, 243, 199);
             badgeBorder = new Color(253, 230, 138);
             badgeFg = new Color(180, 83, 9);
-            roleIcon = "\uD83D\uDCCB";
+            roleIcon = "●";
         }
 
         userBadge.setBackground(badgeBg);
@@ -275,7 +275,8 @@ public class MainFrame extends JFrame {
         ));
 
         JLabel userIcon = new JLabel(roleIcon);
-        userIcon.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        userIcon.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        userIcon.setForeground(badgeFg);
 
         JLabel userInfo = new JLabel(currentUser + " (" + currentRole + ")");
         userInfo.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -284,17 +285,29 @@ public class MainFrame extends JFrame {
         userBadge.add(userIcon);
         userBadge.add(userInfo);
 
-        JButton logoutBtn = new JButton("Logout");
+        JButton logoutBtn = new JButton("Logout") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                Color bg = getModel().isPressed() ? new Color(250, 220, 220)
+                        : (getModel().isRollover() ? new Color(255, 230, 230) : new Color(255, 242, 242));
+                g2.setColor(bg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
+                g2.setColor(new Color(245, 195, 195));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 6, 6);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         logoutBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
         logoutBtn.setForeground(new Color(195, 45, 45));
-        logoutBtn.setBackground(new Color(255, 240, 240));
+        logoutBtn.setContentAreaFilled(false);
         logoutBtn.setFocusPainted(false);
-        logoutBtn.setOpaque(true);
+        logoutBtn.setBorderPainted(false);
+        logoutBtn.setOpaque(false);
         logoutBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        logoutBtn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(245, 200, 200), 1),
-                new EmptyBorder(6, 14, 6, 14)
-        ));
+        logoutBtn.setBorder(BorderFactory.createEmptyBorder(6, 14, 6, 14));
 
         logoutBtn.addActionListener(e -> handleLogout());
 
