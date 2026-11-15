@@ -1,24 +1,24 @@
 # MediCare - Hospital Management System
 
-> A desktop hospital operations and scheduling management system built with Java Swing and MySQL.
+> A modular desktop hospital operations and scheduling management system built with Java Swing, JDBC, and MySQL.
 
 ![Java](https://img.shields.io/badge/Java-17%2B-orange?logo=openjdk)
 ![Database](https://img.shields.io/badge/Database-MySQL-blue?logo=mysql)
-![Architecture](https://img.shields.io/badge/Architecture-MVC%20%2F%20Layered%20Repository-success)
+![Architecture](https://img.shields.io/badge/Architecture-Layered%20Repository-success)
 
 ---
 
 ## Features
 
-- **Role-Based Authentication**: Secure authentication supporting **Admin**, **Receptionist**, and **Doctor** roles with database credential validation against `users` table and offline fallback.
-- **Patient Records Management**: Complete patient onboarding with sequential ID generation (`P-101`), demographic details, blood group, contact information, diagnosis records, and real-time search filtering.
-- **Doctor Directory & Scheduling**: Medical specialist directory tracking department specializations, consultation fees, chamber room numbers, qualifications, and visiting hours with specialty filters.
-- **Appointment Scheduling**: Consultation booking linking patients and doctors with time-slot allocations, department routing, notes, and visual status badges (`Scheduled`, `Completed`, `Cancelled`).
-- **Billing & Invoicing Panel**: Comprehensive hospital invoice creation with auto-calculated totals across consultations, medical treatments, and prescriptions. Supports multiple payment methods (`Cash`, `Card`, `Insurance`, `Bank Transfer`), status badges (`Paid`, `Pending`, `Partial`), and a formatted pop-up receipt preview.
-- **Ward & Bed Management**: Inpatient occupancy tracking across hospital wards (`ICU`, `General Ward`, `Emergency`, `Maternity`, `Pediatric`). Includes status indicators (`Occupied`, `Available`, `Under Maintenance`), admission date tracking, and an automated discharge calculator computing length of stay and total hospital room fees.
-- **Pharmacy & Medicine Inventory**: Pharmaceutical catalog tracking stock quantities, unit pricing, expiry dates, categories, and manufacturers. Provides automatic real-time low-stock alerts (`<15` units), quick one-click dispensing (`-1`), and batch inventory restock adjustments.
-- **Interactive UI with Click-to-Edit**: Responsive Swing desktop UI featuring sidebar navigation, formatted data tables, and click-to-edit row synchronization.
-- **Automated Schema Provisioning**: Built-in table initialization in `DbConnection` automatically detects, provisions, and seeds required MySQL schema for all 7 tables on first run.
+- **Role-Based Access Control (RBAC)**: Enforces customized operational workspaces and permissions for **Admin**, **Doctor**, and **Receptionist** roles with authentication backed by the `users` table.
+- **Patient Records Management**: Onboard and track patients with sequential ID generation (`P-101`), demographic records, blood group, contact info, clinical diagnosis notes, and real-time search filtering.
+- **Doctor Directory & Schedules**: Medical specialist directory tracking department specialties, chamber room numbers, consultation fees, qualifications, and visiting hours with specialty-based filtering.
+- **Appointment Scheduling**: Consultation booking linking patients and doctors with time-slot allocations, department routing, clinical visit notes, and status indicators (`Scheduled`, `Completed`, `Cancelled`).
+- **Billing & Invoicing**: Comprehensive invoice generator calculating itemized totals across consultation, treatments, and prescribed medicines with support for multiple payment methods (`Cash`, `Card`, `Insurance`) and printable receipt previews.
+- **Ward & Bed Occupancy**: Inpatient ward tracker (`ICU`, `General Ward`, `Emergency`, `Maternity`, `Pediatric`) monitoring live bed statuses (`Available`, `Occupied`), patient admissions, and automated discharge fee calculations.
+- **Pharmacy & Stock Inventory**: Drug inventory catalog managing unit pricing, stock thresholds, batch expiry dates, and categories. Includes instant one-click dispensing (`-1`) and inventory restock adjustments.
+- **Automated Self-Provisioning Database**: `DatabaseSetup` automatically creates `hospital_db` on the local MySQL server on startup, provisions all 7 relational tables, and ensures base role accounts are initialized.
+- **Cross-Platform Swing UI**: Custom anti-aliased button painting (`paintComponent`) ensuring consistent, high-contrast button styling across Windows visual styles and standard Look-and-Feels.
 
 ---
 
@@ -30,13 +30,13 @@
 | **Presentation / UI** | Java Swing & AWT | Standard Library (Java SE) |
 | **Database** | MySQL | 5.7+ / 8.0+ |
 | **JDBC Driver** | MySQL Connector/J | 26.7.0 (`lib/mysql-connector-j-26.7.0.jar`) |
-| **Tooling & IDE** | VS Code Java Extension Pack, Windows Batch | Standard |
+| **Build & Tooling** | Windows Batch (`run.bat`), VS Code Java Tools | Standard |
 
 ---
 
 ## Architecture
 
-The project follows a layered architecture separating presentation, business logic, persistence, and data models:
+The project follows a 5-layer enterprise architecture cleanly separating UI views, business service coordinators, data repositories, domain POJOs, and database connection utilities:
 
 ```mermaid
 flowchart TD
@@ -78,9 +78,10 @@ flowchart TD
         MM["Medicine"]
     end
 
-    subgraph DB ["Database (hospital.utils)"]
+    subgraph DB ["Database Utilities (hospital.utils)"]
+        DBS["DatabaseSetup"]
         DBC["DbConnection"]
-        MYSQL[("MySQL: hopital_db")]
+        MYSQL[("MySQL: hospital_db")]
     end
 
     LF --> MF
@@ -112,6 +113,7 @@ flowchart TD
     WR --> DBC
     MR --> DBC
     LF --> DBC
+    DBS --> DBC
 
     DBC --> MYSQL
 
@@ -136,28 +138,28 @@ Hospital Management System/
 ├── src/
 │   └── hospital/
 │       ├── App.java            # Application bootstrap and startup routine
-│       ├── model/              # Domain entities
+│       ├── model/              # Domain POJO entities
 │       │   ├── Appointment.java
 │       │   ├── Bed.java
 │       │   ├── Bill.java
 │       │   ├── Doctor.java
 │       │   ├── Medicine.java
 │       │   └── Patient.java
-│       ├── repository/         # Data access objects (PreparedStatements & SQL)
+│       ├── repository/         # Data access objects (PreparedStatements & SQL queries)
 │       │   ├── AppointmentRepo.java
 │       │   ├── BedRepo.java
 │       │   ├── BillRepo.java
 │       │   ├── DoctorRepo.java
 │       │   ├── MedicineRepo.java
 │       │   └── PatientRepo.java
-│       ├── services/           # Service layer coordinating business operations
+│       ├── services/           # Service coordinators & business logic validation
 │       │   ├── AppointmentServices.java
 │       │   ├── BedServices.java
 │       │   ├── BillServices.java
 │       │   ├── DoctorServices.java
 │       │   ├── MedicineServices.java
 │       │   └── PatientServices.java
-│       ├── ui/                 # Swing GUI views and custom component cards
+│       ├── ui/                 # Swing views, custom cards, and management panels
 │       │   ├── AppointmentPanel.java
 │       │   ├── BillingPanel.java
 │       │   ├── DoctorPanel.java
@@ -166,12 +168,13 @@ Hospital Management System/
 │       │   ├── PatientPanel.java
 │       │   ├── PharmacyPanel.java
 │       │   └── WardPanel.java
-│       └── utils/
-│           └── DbConnection.java # JDBC connection provider & table bootstrap
-├── .gitignore                  # Git exclusion rules (build artifacts & binaries)
+│       └── utils/              # Database initialization and JDBC connectivity
+│           ├── DatabaseSetup.java
+│           └── DbConnection.java
+├── .gitignore                  # Git exclusion rules
 ├── README.md                   # Project documentation
-├── run.bat                     # Windows compilation and execution script
-└── schema.sql                  # Database definition and initial seed records
+├── run.bat                     # Windows compilation and launch script
+└── schema.sql                  # Database DDL schema & base authentication accounts
 ```
 
 ---
@@ -180,8 +183,8 @@ Hospital Management System/
 
 ### Prerequisites
 
-- **Java Development Kit**: JDK 17 or higher installed with `javac` and `java` available on PATH.
-- **MySQL Server**: MySQL 5.7+ or 8.0+ (via XAMPP, WampServer, or standalone MySQL Server) running on port `3306`.
+- **Java Development Kit**: JDK 17 or higher installed with `javac` and `java` available on your system `PATH`.
+- **MySQL Server**: MySQL 5.7+ or 8.0+ (via XAMPP, WampServer, or standalone MySQL service) active on port `3306`.
 
 ### Installation
 
@@ -191,89 +194,82 @@ Hospital Management System/
    cd "Hospital Management System"
    ```
 
-2. Verify that the MySQL JDBC jar exists in the `lib/` directory:
+2. Confirm the presence of the MySQL JDBC driver:
    ```cmd
    dir lib\mysql-connector-j-26.7.0.jar
    ```
 
 ### Configuration
 
-Database connection settings are configured in [`src/hospital/utils/DbConnection.java`](src/hospital/utils/DbConnection.java):
+Database connection constants are defined in [`src/hospital/utils/DbConnection.java`](src/hospital/utils/DbConnection.java):
 
-| Setting | Purpose | Default / Example |
+| Constant | Description | Default Value |
 | :--- | :--- | :--- |
-| `HOST` | MySQL Server host | `localhost` |
-| `PORT` | MySQL Server port | `3306` |
-| `DB_NAME` | Target database name | `hospital_db` |
-| `USER` | MySQL user account | `root` |
-| `PASSWORD` | MySQL password | `1234` |
+| `BASE_URL` | MySQL server root URL | `jdbc:mysql://localhost:3306/` |
+| `DB_NAME` | Application database name | `hospital_db` |
+| `USER` | MySQL database username | `root` |
+| `PASSWORD` | MySQL database password | `1234` |
 
-#### Database Schema Setup
-Ensure your MySQL server is running. Create the database via phpMyAdmin or MySQL CLI:
-```sql
-CREATE DATABASE IF NOT EXISTS hospital_db;
-```
-You can import [`schema.sql`](schema.sql) directly, or launch the application—`DbConnection.initializeTables()` will automatically create and seed all tables (`users`, `patients`, `doctors`, `appointments`) on startup.
+> [!NOTE]
+> If your local MySQL (e.g., standard XAMPP) uses a blank password, change `PASSWORD` in `DbConnection.java` to `""`.
 
-### Running the Application
+### Database Initialization
 
-#### Option 1: Quick Run (Windows)
-Execute the provided batch script from the project root:
+Ensure MySQL is running on port `3306`. You do not need to create tables manually:
+- Launching the application automatically executes `DatabaseSetup.initialize()`, which creates the database `hospital_db` (if missing), creates all 7 tables, and initializes default user roles.
+- Alternatively, you can import [`schema.sql`](schema.sql) directly via MySQL CLI or phpMyAdmin.
+
+---
+
+## Running the Application
+
+### Option 1: Quick Run via Script (Windows)
+Double-click or run [`run.bat`](run.bat) from the project root:
 ```cmd
 run.bat
 ```
 
-#### Option 2: Run via VS Code
-1. Open the project folder in **Visual Studio Code**.
-2. Navigate to [`src/hospital/App.java`](src/hospital/App.java).
-3. Press `F5` or click **Run Java** in the top-right corner.
+### Option 2: VS Code
+1. Open the workspace root folder in **Visual Studio Code**.
+2. Open [`src/hospital/App.java`](src/hospital/App.java).
+3. Press `F5` or click **Run Java**.
 
-#### Option 3: Manual Command Line
-Compile and run manually from the project root:
+### Option 3: Manual Command Line
+From the project root:
 ```cmd
-javac -cp "lib/*" -sourcepath src -d bin src\hospital\*.java src\hospital\model\*.java src\hospital\repository\*.java src\hospital\services\*.java src\hospital\ui\*.java src\hospital\utils\*.java
+javac --release 17 -cp "lib/*" -sourcepath src -d bin src\hospital\*.java src\hospital\model\*.java src\hospital\repository\*.java src\hospital\services\*.java src\hospital\ui\*.java src\hospital\utils\*.java
 java -cp "bin;lib/*" hospital.App
 ```
 
 ---
 
-## Usage
+## Usage & Access Control
 
-### Default Login Accounts & Role-Based Access Control (RBAC)
+### Default Login Accounts
 
-The database comes pre-seeded with three default accounts for testing:
+The system provisions three base accounts for different operational scopes:
 
-| Role | Username | Password | Access Scope & Segment Permissions |
+| Role | Username | Password | Operational Scope |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin` | `admin123` | **Full Administrative Access**: Complete CRUD rights across all 6 segments, doctor hiring/fee editing, wholesale pharmacy restocking, and patient deletion. |
-| **Doctor** | `doctor` | `doc123` | **Clinical Operations**: Lands directly on appointment consultation queue. Can view patients & update diagnoses, review inpatient ward occupancies, and check medicine catalog. Financial billing and doctor staff management are hidden; destructive delete is blocked. |
-| **Receptionist** | `staff` | `staff123` | **Front Desk & Cashier**: Patient check-in & registration, appointment booking & rescheduling, billing invoice creation & receipt printing, inpatient bed allocation & discharge fee calculation, and medication dispensing. Destructive deletions and doctor staff modifications are blocked. |
+| **Admin** | `admin` | `admin123` | **Full Administrative Access**: Unrestricted access across all 6 panels, including doctor hiring, stock adjustments, and record deletion. |
+| **Doctor** | `doctor` | `doc123` | **Clinical Review**: Lands directly on the appointment consultation queue. Can update patient diagnoses, monitor ward bed occupancy, and view medicine stock. Financial billing is hidden. |
+| **Receptionist** | `staff` | `staff123` | **Front Desk Operations**: Patient onboarding, appointment booking, invoice generation, bed admissions/discharges, and medication dispensing. Destructive deletions are blocked. |
 
-#### Role-Based Privilege Matrix
+### Role Privilege Matrix
 
-| Module / Operation | 👑 Admin | 🩺 Doctor | 📋 Receptionist / Staff |
+| Module / Action | Admin | Doctor | Receptionist |
 | :--- | :---: | :---: | :---: |
-| **Patients** (Register & Update) | ✅ Full | ✅ Update Diagnosis | ✅ Register & Update Demographics |
-| **Patients** (Delete Record) | ✅ Allowed | ❌ Blocked | ❌ Blocked |
-| **Doctor Directory** | ✅ Full CRUD | 🔍 View-only directory | 🔍 View-only directory (check schedules) |
-| **Appointments** | ✅ Full CRUD | ✅ View queue, add notes, complete visit | ✅ Book, reschedule, cancel |
-| **Billing & Cashier** | ✅ Full CRUD | ❌ **Hidden from navigation** | ✅ Create invoices & print receipts |
-| **Wards & Beds** | ✅ Full CRUD | 🔍 View bed occupancy | ✅ Allocate beds & discharge patients |
-| **Pharmacy Inventory** | ✅ Full CRUD & restock | 🔍 View stock availability | ✅ Dispense medication (`-1`) |
-
-### Workflows
-
-1. **Login**: Launch the app, choose your assigned role, and input your credentials into `LoginFrame`.
-2. **Patient Registration**: Open the **Patients** tab. Fill in patient information and click **Add Patient**. Use the filter input above the table to search existing records by name, phone, or ID.
-3. **Doctor Directory**: Open the **Doctors** tab to browse active physicians, filter by specialty, or update consultation fees and chamber rooms.
-4. **Appointment Booking**: Open the **Appointments** tab. Select the patient, attending doctor, preferred time slot, and clinical notes, then click **Book Visit**. Click an existing booking to update status or reschedule.
-5. **Billing & Invoices**: Open the **Billing & Invoices** tab to generate itemized invoices combining consultation, treatment, and medication fees. Select any invoice to preview or print a formatted patient receipt.
-6. **Ward & Bed Management**: Open the **Wards & Beds** tab to monitor bed availability across ICU, Emergency, and general wards. Assign incoming patients to vacant beds, or select an occupied bed to calculate the stay duration and discharge the patient.
-7. **Pharmacy & Medicine Stock**: Open the **Pharmacy Stock** tab to view drug inventories, filter by medical category or stock status, replenish supplies with the **Adjust Stock** tool, or dispense prescriptions with quick action buttons.
+| **Patients** (Register & Edit) | Full | Update Diagnosis | Register & Demographics |
+| **Patients** (Delete) | Allowed | Blocked | Blocked |
+| **Doctor Directory** | Full CRUD | View-only | View-only |
+| **Appointments** | Full CRUD | View Queue & Add Notes | Book, Reschedule, Cancel |
+| **Billing & Invoices** | Full CRUD | *Hidden from menu* | Create Invoices & Print |
+| **Wards & Beds** | Full CRUD | View Occupancy | Allocate & Discharge |
+| **Pharmacy Stock** | Full CRUD | View Availability | Dispense (`-1`) |
 
 ---
 
 ## Contributing & License
 
-- **Contributing**: Pull requests and issue reports are welcome. When making modifications, ensure all Java source files compile without warnings and adhere to the established package hierarchy (`hospital.*`).
-- **License**: <!-- TODO: confirm license type (e.g. MIT, Apache 2.0, or Proprietary) --> This project is currently provided for educational and clinical administration evaluation. Add a formal `LICENSE` file in the project root if publishing as open source.
+- **Contributing**: Contributions and pull requests are welcome. Please ensure all modifications compile cleanly with `javac --release 17 -cp "lib/*"` without warnings.
+- **License**: <!-- TODO: confirm license type (e.g., MIT, Apache 2.0, or Proprietary) --> Provided for academic and institutional evaluation.
